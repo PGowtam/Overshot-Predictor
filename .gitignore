@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+ENV/
+
+# Data files (large, not tracked)
+Data/
+outputs/
+*.parquet
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.csv
+
+# Model artifacts
+*.keras
+*.pb
+saved_model/
+checkpoints/
+
+# Plots (regenerated)
+outputs/plots/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temp files
+temp_ticks*/
+*.tmp
+*.log
+
+# Config with secrets (if any)
+.env

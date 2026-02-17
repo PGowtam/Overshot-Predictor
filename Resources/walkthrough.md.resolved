@@ -1,0 +1,225 @@
+# BrickOfTicks System — Comprehensive Understanding
+
+## What Is This System?
+
+**BrickOfTicks** is an **XAUUSD Renko trading system** that predicts whether price will hit Take Profit (TP) before Stop Loss (SL) after each Renko brick close, using **tick-level microstructure physics** (Order Flow Imbalance) fed into a **CNN+LSTM hybrid model** with dual prediction heads.
+
+The core thesis: unfiltered Renko trading at 1:1 TP/SL yields ~49.5% win rate (slightly negative after spread). By filtering trades through **fast-brick hard rules** (87–94% WR) and a **microstructure model** (target ≥60% WR), the system achieves positive expected value.
+
+---
+
+## The Three Exploitable Inefficiencies
+
+| Inefficiency | Win Rate | Condition | Mechanism |
+|---|---|---|---|
+| Duration momentum | 64–79% | Bricks forming in <10 seconds | Aggressive order flow continues |
+| Sequence context | 87–94% | Fast bricks + Agreement ≥4 or ≤1 | Directional context amplifies signal |
+| OFI microstructure | Target ≥60% | Normal bricks filtered by model | OFI predicts price impact (R²=65%) |
+
+---
+
+## Data Available
+
+### Tick Data (`Data/Raw/Ticks/`)
+- **Format**: Daily `.parquet` files organized as `Ticks/{year}/{month}/{day}.parquet`
+- **Schema**: `timestamp` (ns, UTC), `bid`, `bid_vol`, `ask`, `ask_vol`
+- **Coverage**: 2020–2026 (7 years)
+- **Nature**: L1 OTC quote stream — **no trade prices** (Lee-Ready is invalid)
+
+### Renko CSVs (`Data/Raw/`)
+| File | Rows | Coverage |
+|---|---|---|
+| `renko_with_tick_outcomes_no_be_XAUUSD20-24.csv` | 30,978 | 2020–2024 |
+| `renko_with_tick_outcomes_no_be_24_local.csv` | 6,169 | 2024 only |
+
+**Columns**: `date`, `open`, `high`, `low`, `close`, `volume` (always 1.0), `uptrend`, `brick_size` (ATR-based, mean ~2.11), `sequence` (binary direction string), `outcome` (WIN/LOSS)
+
+> [!IMPORTANT]
+> The CSVs contain only binary WIN/LOSS outcomes. They do **NOT** contain `y_mag` (overshoot ratio). Computing `y_mag` requires scanning L1 tick data after each brick close — this is a **hard dependency** for training Head B.
+
+---
+
+## The Prediction Target: Predicted Overshoot (Pred_OS)
+
+**Pred_OS** = total price travel from entry to peak, normalised by `brick_size`. Measured from **entry price**, not from TP.
+
+- `Pred_OS < 1.0` → LOSS (SL hit first)
+- `Pred_OS = 1.0` → TP exactly reached
+- `Pred_OS > 1.1` → TP reached + spread covered (trade filter threshold)
+
+**Label construction** (`y_mag`):
+- **WIN**: `y_mag = (peak_price - entry_price) / brick_size` (from L1 tick scan)
+- **LOSS**: `y_mag = 0.0` (not masked — the model must learn to output zero for losing setups)
+
+---
+
+## System Architecture (5 Phases)
+
+### Phase 1: Feature Engineering — The 9D Tick Vector + 3D Macro Vector
+
+**Per-tick** (9 features, all z-scored over rolling 1000-tick window):
+
+| # | Feature | Formula | Purpose |
+|---|---|---|---|
+| 1 | `z_OFI` | Weak-inequality OFI → z-score | Core pressure signal (Cont et al.) |
+| 2 | `z_Depth` | bid_vol + ask_vol → z-score | Total liquidity at the touch |
+| 3 | `z_Susc` | OFI_raw / (Depth_raw + 1e-8) → z-score | Pressure per unit resistance (divide RAW first, THEN z-score) |
+| 4 | `z_Vel` | 1/(tick_gap_ms + 1e-3) → z-score | Tick arrival velocity |
+| 5 | `z_Spread` | ask - bid → z-score | Dealer risk aversion indicator |
+| 6 | `Progress` | (mid - brick_open) / brick_size | Price location within current brick (sawtooth) |
+| 7 | `Flag_Curr` | 1 if tick ∈ current brick | Leakage guard (structural) |
+| 8 | `Flag_Zone` | 1 if price is beyond prev brick's TP/SL | Leakage guard (surgical) |
+| 9 | `Decay` | (CurrentBrickID - TickBrickID) / MaxDepth | Recency gradient (0=current, 1=oldest) |
+
+**Per-brick** (3D macro-vector at brick close):
+
+| # | Feature | Formula |
+|---|---|---|
+| 1 | `Log_Dur` | log(duration_seconds + 1) |
+| 2 | `Direction` | +1 (green) / -1 (red) |
+| 3 | `z_Size` | (brick_size - μ_50) / σ_50 |
+
+### Phase 2: Buffer Management & State Persistence
+
+```mermaid
+graph TD
+    A["Every Tick"] --> B["Micro-Buffer<br/>deque(maxlen=100)<br/>Stores 9D vectors"]
+    A --> C["Z-Score Deques<br/>5× deque(maxlen=1000)<br/>Raw feature values"]
+    D["Every Brick Close"] --> E["Macro-History<br/>Last 10 bricks<br/>RAW (100,9) snapshot + M_t"]
+    D --> F["BrickID++"]
+    G["Session Shutdown"] --> H["state.json<br/>Serialize all deques<br/>+ Macro-History"]
+    H --> I["Session Startup<br/>Restore & recompute μ/σ"]
+```
+
+> [!NOTE]
+> **Micro-Buffer is NEVER reset at brick boundaries**. It's a continuous rolling window. Fast bricks (~10 ticks) will have 90% spillover from prior bricks. The leakage flags (`Flag_Curr`, `Flag_Zone`, `Decay`) let the CNN distinguish current vs spillover ticks.
+
+### Phase 3: Model Architecture — CNN + LSTM Hybrid
+
+```mermaid
+graph TB
+    subgraph "Input"
+        MT["Micro Tensor<br/>(B, 10, 100, 9)"]
+        MV["Macro Tensor<br/>(B, 10, 3)"]
+    end
+    subgraph "Layer 1: TimeDistributed CNN (Microscope)"
+        C1["Conv1D k=1, 16 filters (causal)"]
+        C3["Conv1D k=3, 16 filters (causal)"]
+        C5["Conv1D k=5, 16 filters (causal)"]
+        CAT["Concat → (100, 48)"]
+        MP["MaxPool1D(4) → (25, 48)"]
+        FL["Flatten → Dense(32) → Dropout(0.3)"]
+    end
+    subgraph "Layer 2: Fusion"
+        FUS["Concat CNN(32) + Macro(3) → (35) per brick"]
+    end
+    subgraph "Layer 3: LSTM (Telescope)"
+        LSTM["LSTM(32, return_seq=False)<br/>→ Dropout(0.3)"]
+    end
+    subgraph "Layer 4: Dual Heads"
+        HA["Head A: Dense(1, sigmoid)<br/>→ Prob_Win ∈ [0,1]"]
+        HB["Head B: Dense(1, relu)<br/>→ Pred_OS ≥ 0"]
+    end
+    MT --> C1 & C3 & C5
+    C1 & C3 & C5 --> CAT --> MP --> FL
+    FL --> FUS
+    MV --> FUS
+    FUS --> LSTM
+    LSTM --> HA & HB
+```
+
+**Key design decisions**:
+- **MaxPool1D** (not GlobalAvgPool) — preserves temporal position within the 100-tick window
+- **Causal padding** — no look-ahead within the buffer
+- **Raw snapshots stored** (not pre-computed embeddings) — prevents train/inference batch norm mismatch
+- **~48K total parameters** with ~24.5K training samples → 0.5:1 ratio → heavy regularization required
+
+**Dual Prediction Heads** (both share the LSTM(32) output as input — no independent trunks):
+
+| Head | Role | Activation | Output | What It Answers |
+|---|---|---|---|---|
+| **Head A** — Existence Classifier | Predicts probability of hitting TP before SL | `Dense(1, sigmoid)` | `Prob_Win ∈ [0.0, 1.0]` | *"Will this trade win?"* |
+| **Head B** — Magnitude Regressor | Predicts total price travel from entry, normalised by brick_size | `Dense(1, relu)` | `Pred_OS ≥ 0` | *"How far will price go?"* |
+
+Both heads must agree for a trade: `Prob_Win > 0.60` **AND** `Pred_OS > 1.1`. Head A filters low-confidence setups; Head B ensures the predicted move covers TP + spread cost. Training Head B on LOSS samples with `y_mag = 0.0` (rather than masking) teaches it to output near-zero for losing patterns — making Pred_OS a true expected-value predictor.
+
+### Phase 4: Training Strategy
+
+| Split | Date Range | Purpose | Size |
+|---|---|---|---|
+| **Train** | Jan 2020 – Dec 2022 | Weight learning | ~24,578 bricks |
+| **Validation** | Jan 2023 – Mar 2023 | Threshold calibration | ~1,200 bricks |
+| **Test** | Apr 2023 – Dec 2023 | Final eval (never opened) | ~3,600 bricks |
+
+**Loss function**: `L = 1.0 × BCE(Prob_Win, y_class) + 0.3 × Huber(Pred_OS, y_mag, δ=1.0)`
+
+**Exclusions**:
+- Duration < 2s bricks excluded from training (handled by hard rule; buffers are ~95% spillover)
+- Fast-brick chains > depth 5: `sample_weight = 0.5`
+
+**Regularization**: Dropout(0.3), L2(1e-4), early stopping (patience=15), ReduceLROnPlateau
+
+### Phase 5: Execution Logic
+
+```
+ON EVERY BRICK CLOSE:
+  1. Update BrickID, store (100,9) snapshot + M_t in Macro-History
+  2. IF system < Level 1 warmup  →  SKIP
+  3. IF Duration < 10s:
+       Agreement = count(last 5 bricks same direction as current)
+       IF Agreement ≥ 4  →  ENTER in brick direction (trend)
+       IF Agreement ≤ 1  →  ENTER in brick direction (reversal)
+       IF Agreement = 2-3  →  SKIP
+  4. IF Duration ≥ 10s AND system at Level 2:
+       Build tensor (1,10,100,9) + macro (1,10,3)
+       Model inference  →  Prob_Win, Pred_OS
+       IF Prob_Win > 0.60 AND Pred_OS > 1.1  →  ENTER
+       ELSE  →  SKIP
+  5. IF entered: TP = entry ± 1×brick_size, SL = entry ∓ 1×brick_size
+```
+
+**Warmup levels**:
+- **Level 1**: ≥5 bricks closed + ≥30 ticks → Hard Rule available
+- **Level 2**: ≥10 bricks closed + 100 ticks in Micro-Buffer → Model inference available
+
+**Order parameters**: Market entry at brick close, 1:1 TP/SL, **no early exit** (first-passage-time probability is the statistical basis of the edge).
+
+---
+
+## Acceptance Criteria (Key Items)
+
+| AC | Criterion | Pass Condition |
+|---|---|---|
+| AC-01 | No look-ahead bias | Feature vector at tick k has zero info from k+1 onwards |
+| AC-02 | OFI weak inequality | e_k non-zero when bid price static but volume changes |
+| AC-05 | Walk-forward split integrity | Zero date overlap between splits |
+| AC-09 | Head B correlation | Pearson r ≥ 0.30 on validation WIN samples |
+| AC-11 | Hard rule win rate | ≥80% WR for Agreement ≥4 or ≤1 on test set |
+| AC-12 | Model win rate | ≥60% WR on model-filtered bricks on test set |
+| AC-13 | Inference latency | p99 < 100ms |
+
+---
+
+## Key Risks
+
+| Risk | Mitigation |
+|---|---|
+| Model overfits 2020–2022 regime | Quarterly walk-forward retraining; retrain if 4-week WR < 52% |
+| OTC volume always 1.0 | z_Depth/z_OFI become price-direction-only; Susceptibility still valid |
+| Head B near-zero variance | Auto-fallback to binary classifier (y_mag > 1.2) |
+| Pred_OS threshold insufficient if spread spikes | Live spread guard pauses trading when spread > 2× rolling mean |
+| Fast brick chains saturate buffer | Chain downweighting (sample_weight = 0.5) |
+
+---
+
+## What Needs To Be Built
+
+The project is at the **pre-implementation stage**. The PRD and Implementation Plan are fully specified. The data pipeline (Renko CSVs from tick data) already exists from prior work. What remains:
+
+1. **Label Generation Pipeline** — Scan L1 ticks to compute `y_mag` for each brick
+2. **Feature Engineering Module** — 9D tick vector computation with OFI weak inequalities
+3. **Buffer Management** — Micro-Buffer, Macro-History, z-score persistence
+4. **Model Architecture** — TimeDistributed CNN + LSTM with dual heads
+5. **Training Pipeline** — Walk-forward split, hybrid loss, exclusions
+6. **Execution Engine** — Warmup protocol, hard rule, model inference, order placement
+7. **State Persistence** — `state.json` serialization/restoration
