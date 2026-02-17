@@ -103,8 +103,9 @@ outcome, y_class, y_mag, duration_seconds, exclude_flag, csv_outcome_match
 1. Assert `y_mag >= 0.0` for all rows
 2. Assert `y_mag < 1.0` for all `y_class == 0` rows and `y_mag >= 1.0` for all `y_class == 1` rows
 3. Report CSV outcome mismatch rate: `sum(~csv_outcome_match) / total`. Expected 5–10%, investigate if > 15%
-4. Print y_mag distribution stats: mean/median/std/min/max for WIN and LOSS separately
-5. Count and report excluded labels (tick data gaps)
+4. Plot y_mag histogram of mismatched bricks. Assert >80% have `y_mag ∈ [0.85, 1.15]` (boundary effect confirmation)
+5. Print y_mag distribution stats: mean/median/std/min/max for WIN and LOSS separately
+6. Count and report excluded labels (tick data gaps)
 
 ---
 

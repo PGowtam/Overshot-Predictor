@@ -48,6 +48,7 @@
 - [ ] Assert `y_mag >= 1.0` for all `y_class == 1` rows
 - [ ] Report CSV outcome mismatch rate: `sum(~csv_outcome_match) / total` (expect 5–10%)
 - [ ] If mismatch > 15%, investigate: print mismatched bricks' y_mag values (should cluster near 1.0)
+- [ ] Plot y_mag histogram of mismatched bricks; assert >80% have `y_mag ∈ [0.85, 1.15]`
 - [ ] Print y_mag distribution stats: mean, median, std, min, max for WIN and LOSS separately
 - [ ] Count and print excluded labels (tick data gaps)
 - [ ] Save to `outputs/labels.parquet`

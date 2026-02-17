@@ -93,7 +93,7 @@ def calculate_true_overshoot(entry, brick_size, is_long, future_ticks):
 - All tick prices use **mid-price**: `mid = (bid + ask) / 2`. The original CSV used bid-only pricing — mid-price is used here to match the feature pipeline's price convention.
 - `y_class` is derived **from the hybrid algorithm**: `y_class = 1 if tp_hit else 0`. NOT from the CSV `outcome` column.
 
-**FR-LG-02**: The CSV `outcome` column is retained as a **validation reference**. Report mismatch rate between `y_class` (from mid-price hybrid) and CSV `outcome` (from bid-price). Expected ~5–10% mismatch near TP/SL boundary due to half-spread offset. If mismatch > 15%, investigate data integrity.
+**FR-LG-02**: The CSV `outcome` column is retained as a **validation reference**. Report mismatch rate between `y_class` (from mid-price hybrid) and CSV `outcome` (from bid-price). Expected ~5–10% mismatch near TP/SL boundary due to half-spread offset. If mismatch > 15%, investigate data integrity. The mismatch is **systematic, not random**: LONGs gain WINs (mid reaches TP sooner), SHORTs lose WINs (mid reaches TP later). For mismatched bricks, plot y_mag histogram and assert >80% have `y_mag ∈ [0.85, 1.15]` — confirming boundary effect, not data corruption.
 
 **FR-LG-03**: Compute `duration_seconds` = time between current brick close and next brick close (from tick stream or CSV timestamps).
 
