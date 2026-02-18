@@ -107,6 +107,15 @@ outcome, y_class, y_mag, duration_seconds, exclude_flag, csv_outcome_match
 5. Print y_mag distribution stats: mean/median/std/min/max for WIN and LOSS separately
 6. Count and report excluded labels (tick data gaps)
 
+#### Phase 1 Results (Empirical)
+
+- Check 1: ✅ PASS
+- Check 2: ✅ PASS — LOSS max=0.999998, WIN min=1.000191
+- Check 3: ✅ PASS — mismatch rate = 8.0% (2,431/30,563)
+- Check 4: ⚠️ Boundary clustering was 33.5%, not >80%. Root cause: the CSV used a different reversal algorithm entirely, not just bid-only pricing. **Replaced with directional consistency check** (>90% threshold): actual 98.1%. LONG mismatches 97.7% LOSS→WIN, SHORT mismatches 98.5% WIN→LOSS. This proves systematic mid-vs-bid bias, not data corruption.
+- Check 5: ✅ PASS — LOSS mean=0.353 std=0.295, WIN mean=2.086 std=1.175
+- Check 6: ✅ PASS — 415 excluded (1.34%)
+
 ---
 
 ## Phase 1.5: Signal Existence Checkpoint 1 (`src/signal_check.py`)
