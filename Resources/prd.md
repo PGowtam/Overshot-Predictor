@@ -279,3 +279,7 @@ M2_new = M2_old + (x_new - x_old) * ((x_new - μ_new) + (x_old - μ_old))
 - Automated retraining pipeline
 - Sub-10ms latency optimization
 - Expanding window cross-validation (3-fold) — planned for iteration 2 after first end-to-end pass
+
+### Planned Post-Pipeline Phase
+
+**Phase 9: Market Realism Recalibration** — After Phases 1–8 complete with mid-price scanning, re-run the entire pipeline with execution-realistic pricing (bid for LONG exits, ask for SHORT exits). Compare model performance to determine which pricing yields a genuine, tradeable edge. Motivated by the finding that mid-price scanning introduces a directional asymmetry (LONG 57.5% WIN vs SHORT 42.7%) that doesn't reflect real execution.

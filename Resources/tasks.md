@@ -418,6 +418,30 @@
 
 ---
 
+## Phase 9: Market Realism Recalibration
+
+> **Context**: Phases 1–8 use mid-price `(bid+ask)/2` for tick scanning in label generation. This creates a directional asymmetry (LONG win rate 57.5% vs SHORT 42.7%) that doesn't exist in real trading, where exits occur at bid (for longs) or ask (for shorts). Phase 9 recalibrates the entire pipeline with realistic execution pricing and compares against the mid-price baseline.
+
+### 9.1 Pricing reconfiguration
+- [ ] Modify `calculate_true_overshoot` to accept a `pricing_mode` parameter (`"mid"`, `"execution"`)
+- [ ] In `"execution"` mode: scan with bid for LONG trades, ask for SHORT trades
+- [ ] Re-run label generation with execution pricing → `outputs/labels_exec.parquet`
+- [ ] Compare directional win rates (expect LONG ≈ 49%, SHORT ≈ 50%)
+
+### 9.2 Pipeline re-run
+- [ ] Re-run feature engineering, buffer simulation, tensor construction with new labels
+- [ ] Retrain model with execution-priced labels
+- [ ] Re-calibrate thresholds
+
+### 9.3 Comparison analysis
+- [ ] Compare test set WR: mid-price model vs execution-price model
+- [ ] Compare holdout WR: mid-price model vs execution-price model
+- [ ] Compare signal check correlations: are the same features significant?
+- [ ] Determine which pricing yields a genuine, tradeable edge
+- [ ] Document findings in `outputs/pricing_comparison_report.md`
+
+---
+
 ## Iteration 2: Expanding Window Cross-Validation (Deferred)
 
 _To be executed after the first end-to-end pass succeeds._

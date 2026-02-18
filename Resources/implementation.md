@@ -695,6 +695,35 @@ Each fold trains a fresh model. If all 3 folds achieve WR ≥ 58%, the model has
 
 ---
 
+## Phase 9: Market Realism Recalibration
+
+### Objective
+Phases 1–8 use mid-price `(bid+ask)/2` for tick scanning. This creates a directional asymmetry (LONG 57.5% WIN vs SHORT 42.7%) that doesn't exist in real execution.
+
+In real trading:
+- **LONG exit** = sell at bid → scan with bid
+- **SHORT exit** = buy at ask → scan with ask
+
+Phase 9 re-runs the full pipeline with execution-realistic pricing and compares model performance against the mid-price baseline.
+
+### Algorithm Change
+```python
+# Current (mid-price for all)
+mid = (bid + ask) / 2
+
+# Execution mode
+scan_price = bid if is_long else ask
+```
+
+### Verification
+1. LONG/SHORT win rates should be balanced (~49–50% each)
+2. y_mag boundary (LOSS < 1.0, WIN ≥ 1.0) still holds
+3. CSV outcome mismatch rate should drop (bid scanning matches CSV for LONGs)
+4. Compare test/holdout WR between mid-price and execution-price models
+5. Document which approach produces a genuine, tradeable edge
+
+---
+
 ## Verification Plan Summary
 
 | Phase | What to Verify | Method |
@@ -716,6 +745,8 @@ Each fold trains a fresh model. If all 3 folds achieve WR ≥ 58%, the model has
 | 8 | Head B r ≥ 0.30 | Pearson correlation test |
 | 8 | Volume ablation completed | Compare WR across feature sets |
 | 8 | Holdout WR ≥ 55% | Holdout evaluation |
+| 9 | Balanced win rates (~49–50% each direction) | Label stats |
+| 9 | Mid-price vs execution-price model comparison | WR comparison |
 
 ---
 
@@ -732,6 +763,7 @@ graph TD
     P5 --> P6["Phase 6: Training"]
     P6 --> P7["Phase 7: Calibration"]
     P7 --> P8["Phase 8: Evaluation"]
+    P8 --> P9["Phase 9: Market Realism"]
     P1 --> P4
     
     style P1 fill:#e8d44d
