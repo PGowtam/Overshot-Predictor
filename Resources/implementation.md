@@ -148,6 +148,19 @@ Verify that raw microstructure features carry measurable signal for predicting y
 - `outputs/signal_check_1.json` with correlation values and decision
 - Console printout of results
 
+#### Phase 1.5 Results (Empirical)
+
+| Feature | r | |r| | p-value | Significance |
+|---|---|---|---|---|
+| raw_ofi | +0.099 | 0.099 | 4.9e-67 | *** |
+| raw_spread | -0.097 | 0.097 | 7.3e-64 | *** |
+| raw_velocity | +0.001 | 0.001 | 0.86 | ns |
+
+- **Decision: 🟢 GREEN** — raw_ofi and raw_spread both have |r| > 0.03 (actually > 0.09)
+- 30,427/30,563 bricks successfully extracted, 136 skipped
+- OFI and spread carry strong linear signal at brick-close timescale
+- Velocity is not significant — tick arrival rate alone doesn't predict outcome
+
 ---
 
 ## Phase 2: Feature Engineering (`src/feature_engine.py`)
