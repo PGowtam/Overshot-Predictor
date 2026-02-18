@@ -6,14 +6,14 @@
 
 ## Phase 0: Project Setup
 
-- [ ] Create project directory structure (`src/`, `tests/`, `outputs/`, `outputs/features/`, `outputs/tensors/`, `outputs/plots/`)
-- [ ] Create Python virtual environment in `.venv`
-- [ ] Install core dependencies: `numpy`, `pandas`, `pyarrow`, `tensorflow`/`keras`, `scikit-learn`, `matplotlib`, `scipy`
-- [ ] Verify data availability:
-  - [ ] Confirm `Data/Raw/renko_with_tick_outcomes_no_be_XAUUSD20-24.csv` loads correctly (30,978 rows)
-  - [ ] Confirm tick parquets load (`Data/Raw/Ticks/2020/01/01.parquet` — schema: timestamp, bid, bid_vol, ask, ask_vol)
-  - [ ] Spot-check tick data for 3 random dates across 2020, 2021, 2022, 2023
-- [ ] Load Renko CSV and print summary stats: date range, row count, WIN/LOSS ratio, brick_size distribution
+- [x] Create project directory structure (`src/`, `tests/`, `outputs/`, `outputs/features/`, `outputs/tensors/`, `outputs/plots/`)
+- [x] Create Python virtual environment in `.venv`
+- [x] Install core dependencies: `numpy`, `pandas`, `pyarrow`, `tensorflow`/`keras`, `scikit-learn`, `matplotlib`, `scipy`
+- [x] Verify data availability:
+  - [x] Confirm `Data/Raw/renko_with_tick_outcomes_no_be_XAUUSD20-24.csv` loads correctly (30,978 rows)
+  - [x] Confirm tick parquets load (`Data/Raw/Ticks/2020/01/01.parquet` — schema: timestamp, bid, bid_vol, ask, ask_vol)
+  - [x] Spot-check tick data for 3 random dates across 2020, 2021, 2022, 2023
+- [x] Load Renko CSV and print summary stats: date range, row count, WIN/LOSS ratio, brick_size distribution
 
 ---
 
