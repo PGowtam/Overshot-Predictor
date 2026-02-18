@@ -66,24 +66,24 @@
 ## Phase 1.5: Signal Existence Checkpoint 1 (`src/signal_check.py`)
 
 ### 1.5.1 Raw feature extraction
-- [ ] Load `outputs/labels.parquet`
-- [ ] For each non-excluded brick, load last tick before brick close
-- [ ] Compute raw features at that tick:
-  - [ ] `raw_ofi = e_k` (OFI using previous tick for delta)
-  - [ ] `raw_velocity = 1 / (t_k - t_{k-1} + 1e-3)`
-  - [ ] `raw_spread = ask - bid`
+- [x] Load `outputs/labels.parquet`
+- [x] For each non-excluded brick, load last tick before brick close
+- [x] Compute raw features at that tick:
+  - [x] `raw_ofi = e_k` (OFI using previous tick for delta)
+  - [x] `raw_velocity = 1 / (t_k - t_{k-1} + 1e-3)`
+  - [x] `raw_spread = ask - bid`
 
 ### 1.5.2 Correlation analysis
-- [ ] Compute point-biserial correlation: `pearsonr(raw_ofi, y_class)`
-- [ ] Compute point-biserial correlation: `pearsonr(raw_velocity, y_class)`
-- [ ] Compute point-biserial correlation: `pearsonr(raw_spread, y_class)`
-- [ ] Print p-values alongside correlations
+- [x] Compute point-biserial correlation: `pearsonr(raw_ofi, y_class)`
+- [x] Compute point-biserial correlation: `pearsonr(raw_velocity, y_class)`
+- [x] Compute point-biserial correlation: `pearsonr(raw_spread, y_class)`
+- [x] Print p-values alongside correlations
 
 ### 1.5.3 Decision gate
-- [ ] If all |r| < 0.02: print "🔴 RED — No linear signal detected. Proceed with caution."
-- [ ] If any |r| > 0.03: print "🟢 GREEN — Signal confirmed."
-- [ ] If 0.02–0.03: print "🟡 AMBER — Weak signal. CNN+LSTM must find non-linear patterns."
-- [ ] Save results to `outputs/signal_check_1.json`
+- [x] If all |r| < 0.02: print "🔴 RED — No linear signal detected. Proceed with caution."
+- [x] If any |r| > 0.03: print "🟢 GREEN — Signal confirmed."
+- [x] If 0.02–0.03: print "🟡 AMBER — Weak signal. CNN+LSTM must find non-linear patterns."
+- [x] Save results to `outputs/signal_check_1.json`
 
 ---
 
