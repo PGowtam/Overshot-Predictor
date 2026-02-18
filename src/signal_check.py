@@ -182,6 +182,9 @@ def run_correlation_analysis(features_df: pd.DataFrame) -> dict:
             continue
 
         r, p = pearsonr(x_clean, y_clean)
+        if np.isnan(r):
+            results[feat] = {"r": 0.0, "p_value": 1.0, "abs_r": 0.0, "n": int(len(x_clean))}
+            continue
         results[feat] = {
             "r": round(float(r), 6),
             "p_value": float(p),
