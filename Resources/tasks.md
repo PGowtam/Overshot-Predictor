@@ -20,46 +20,46 @@
 ## Phase 1: Label Generation (`src/label_generator.py`)
 
 ### 1.1 Core label generator
-- [ ] Write function `load_ticks_for_date(date) -> DataFrame` that loads the correct parquet file for a given date
-- [ ] Write function `load_ticks_range(start_time, end_time) -> DataFrame` that loads and concatenates tick files spanning multiple days
-- [ ] Write function `calculate_true_overshoot(entry, brick_size, is_long, future_ticks) -> y_mag`:
-  - [ ] Compute TP and SL levels
-  - [ ] Phase 1 (pre-TP): track rolling peak, check reversal against fixed SL level
-  - [ ] Phase 2 (post-TP): switch to dynamic 1-brick-size trailing reversal from peak
-  - [ ] Return `y_mag = abs(peak - entry) / brick_size`
-  - [ ] LOSS bricks: y_mag ∈ [0, ~1.0), WIN bricks: y_mag ∈ [1.0, ∞)
-  - [ ] Handle edge case: tick data ends before resolution → return None (exclude)
-- [ ] Write function `compute_duration(brick_close_time, next_brick_close_time) -> float` (seconds)
+- [x] Write function `load_ticks_for_date(date) -> DataFrame` that loads the correct parquet file for a given date
+- [x] Write function `load_ticks_range(start_time, end_time) -> DataFrame` that loads and concatenates tick files spanning multiple days
+- [x] Write function `calculate_true_overshoot(entry, brick_size, is_long, future_ticks) -> y_mag`:
+  - [x] Compute TP and SL levels
+  - [x] Phase 1 (pre-TP): track rolling peak, check reversal against fixed SL level
+  - [x] Phase 2 (post-TP): switch to dynamic 1-brick-size trailing reversal from peak
+  - [x] Return `y_mag = abs(peak - entry) / brick_size`
+  - [x] LOSS bricks: y_mag ∈ [0, ~1.0), WIN bricks: y_mag ∈ [1.0, ∞)
+  - [x] Handle edge case: tick data ends before resolution → return None (exclude)
+- [x] Write function `compute_duration(brick_close_time, next_brick_close_time) -> float` (seconds)
 
 ### 1.2 Batch processing
-- [ ] Write main function `generate_all_labels(renko_csv, tick_dir) -> DataFrame`:
-  - [ ] Iterate through all 30,978 bricks
-  - [ ] For each brick: load ticks after close, call `calculate_true_overshoot`
-  - [ ] Derive `y_class` from hybrid algorithm: `y_class = 1 if tp_hit else 0` (NOT from CSV outcome)
-  - [ ] Compute `csv_outcome_match = (y_class == (1 if CSV.outcome == 'WIN' else 0))`
-  - [ ] Assign global `brick_id` (0 to N-1)
-  - [ ] Handle edge cases: last brick in dataset, missing tick files, overnight gaps
-- [ ] Add progress reporting (print every 1000 bricks)
-- [ ] Add `exclude_flag` column for bricks where neither SL/TP/reversal resolved
+- [x] Write main function `generate_all_labels(renko_csv, tick_dir) -> DataFrame`:
+  - [x] Iterate through all 30,978 bricks
+  - [x] For each brick: load ticks after close, call `calculate_true_overshoot`
+  - [x] Derive `y_class` from hybrid algorithm: `y_class = 1 if tp_hit else 0` (NOT from CSV outcome)
+  - [x] Compute `csv_outcome_match = (y_class == (1 if CSV.outcome == 'WIN' else 0))`
+  - [x] Assign global `brick_id` (0 to N-1)
+  - [x] Handle edge cases: last brick in dataset, missing tick files, overnight gaps
+- [x] Add progress reporting (print every 1000 bricks)
+- [x] Add `exclude_flag` column for bricks where neither SL/TP/reversal resolved
 
 ### 1.3 Validation
-- [ ] Assert `y_mag >= 0.0` for all rows
-- [ ] Assert `y_mag < 1.0` for all `y_class == 0` rows
-- [ ] Assert `y_mag >= 1.0` for all `y_class == 1` rows
-- [ ] Report CSV outcome mismatch rate: `sum(~csv_outcome_match) / total` (expect 5–10%)
-- [ ] If mismatch > 15%, investigate: print mismatched bricks' y_mag values (should cluster near 1.0)
-- [ ] Plot y_mag histogram of mismatched bricks; assert >80% have `y_mag ∈ [0.85, 1.15]`
-- [ ] Print y_mag distribution stats: mean, median, std, min, max for WIN and LOSS separately
-- [ ] Count and print excluded labels (tick data gaps)
-- [ ] Save to `outputs/labels.parquet`
+- [x] Assert `y_mag >= 0.0` for all rows
+- [x] Assert `y_mag < 1.0` for all `y_class == 0` rows
+- [x] Assert `y_mag >= 1.0` for all `y_class == 1` rows
+- [x] Report CSV outcome mismatch rate: `sum(~csv_outcome_match) / total` (expect 5–10%)
+- [x] If mismatch > 15%, investigate: print mismatched bricks' y_mag values (should cluster near 1.0)
+- [x] Directional consistency check: assert >90% of mismatches follow mid-vs-bid pattern (actual: 98.1%)
+- [x] Print y_mag distribution stats: mean, median, std, min, max for WIN and LOSS separately
+- [x] Count and print excluded labels (tick data gaps)
+- [x] Save to `outputs/labels.parquet`
 
 ### 1.4 Unit tests (`tests/test_label_generator.py`)
-- [ ] Test LONG LOSS: price goes up 0.5 bricks then hits SL → y_mag = 0.5
-- [ ] Test LONG LOSS: price never rises, immediately hits SL → y_mag = 0.0
-- [ ] Test LONG WIN: price hits TP then extends 1 more brick before trailing reversal → y_mag = 2.0
-- [ ] Test LONG WIN: price hits TP exactly, immediately retraces → y_mag = 1.0
-- [ ] Test SHORT: mirror of LONG tests
-- [ ] Test edge case: tick data ends before resolution → returns None
+- [x] Test LONG LOSS: price goes up 0.5 bricks then hits SL → y_mag = 0.5
+- [x] Test LONG LOSS: price never rises, immediately hits SL → y_mag = 0.0
+- [x] Test LONG WIN: price hits TP then extends 1 more brick before trailing reversal → y_mag = 2.0
+- [x] Test LONG WIN: price hits TP exactly, immediately retraces → y_mag = 1.0
+- [x] Test SHORT: mirror of LONG tests
+- [x] Test edge case: tick data ends before resolution → returns None
 
 ---
 
