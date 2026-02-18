@@ -265,6 +265,26 @@ Per-brick cached features stored in `outputs/features/`:
 4. Print feature statistics: mean, std, min, max for each of the 9 features
 5. Verify Progress resets at brick boundaries (sawtooth pattern)
 
+#### Phase 2 Results (Empirical)
+
+- **Total ticks processed**: 194,946,880 in 28.9 min (112K ticks/sec)
+- **NaN/Inf count**: 0 ✅
+- **25/25 unit tests passed**
+
+| Feature | Mean | Std | Min | Max |
+|---|---|---|---|---|
+| z_OFI | -0.0000 | 1.009 | -31.38 | 30.79 |
+| z_Depth | 0.0069 | 1.080 | -31.59 | 31.59 |
+| z_Susc | -0.0001 | 1.002 | -30.88 | 31.56 |
+| z_Vel | -0.0002 | 1.004 | -3.33 | 30.90 |
+| z_Spread | -0.0064 | 1.091 | -23.05 | 30.89 |
+| Progress | 0.2134 | 2.168 | -22.32 | 38.08 |
+| Flag_Curr | 1.0000 | 0.000 | 1.00 | 1.00 |
+| Flag_Zone | 0.3686 | 0.482 | 0.00 | 1.00 |
+| Decay | 0.0000 | 0.000 | 0.00 | 0.00 |
+
+> **Note**: Flag_Curr is always 1.0 and Decay is always 0.0 at this phase because ticks are grouped per-brick. These features become meaningful in Phase 3 (Buffer Simulation) when the micro-buffer contains ticks from previous bricks.
+
 ---
 
 ## Phase 3: Buffer Simulation (`src/buffer_sim.py`)

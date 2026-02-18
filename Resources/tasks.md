@@ -90,57 +90,57 @@
 ## Phase 2: Feature Engineering (`src/feature_engine.py`)
 
 ### 2.1 Z-score normalization
-- [ ] Implement `RollingZScore` class:
-  - [ ] `__init__(window=1000)`: create deque, init μ, M2
-  - [ ] `update(x_new) -> z_value`: O(1) incremental update when full, recompute when filling
-  - [ ] Return 0.0 when deque has fewer than 30 values
-  - [ ] Handle edge case: σ = 0 (constant values) → return 0.0
+- [x] Implement `RollingZScore` class:
+  - [x] `__init__(window=1000)`: create deque, init μ, M2
+  - [x] `update(x_new) -> z_value`: O(1) incremental update when full, recompute when filling
+  - [x] Return 0.0 when deque has fewer than 30 values
+  - [x] Handle edge case: σ = 0 (constant values) → return 0.0
 
 ### 2.2 OFI computation
-- [ ] Implement `compute_ofi(bid_k, bid_km1, ask_k, ask_km1, bid_vol_k, bid_vol_km1, ask_vol_k, ask_vol_km1) -> float`:
-  - [ ] Use WEAK inequalities (`>=` and `<=`)
-  - [ ] Verify it fires when `dBid == 0` but `bid_vol` changes
+- [x] Implement `compute_ofi(bid_k, bid_km1, ask_k, ask_km1, bid_vol_k, bid_vol_km1, ask_vol_k, ask_vol_km1) -> float`:
+  - [x] Use WEAK inequalities (`>=` and `<=`)
+  - [x] Verify it fires when `dBid == 0` but `bid_vol` changes
 
 ### 2.3 All raw feature computations
-- [ ] Implement `compute_depth(bid_vol, ask_vol) -> float`
-- [ ] Implement `compute_susceptibility(ofi_raw, depth_raw) -> float` (divide RAW, add 1e-8 to denominator)
-- [ ] Implement `compute_velocity(t_k, t_km1) -> float` (1 / (gap_ms + 1e-3))
-- [ ] Implement `compute_spread(ask, bid) -> float`
-- [ ] Implement `compute_progress(mid, brick_open, brick_size) -> float`
-- [ ] Implement `compute_flag_curr(tick_brick_id, current_brick_id) -> int`
-- [ ] Implement `compute_flag_zone(mid, prev_brick_open, prev_brick_size) -> int`
-- [ ] Implement `compute_decay(current_brick_id, tick_brick_id, max_depth) -> float`
+- [x] Implement `compute_depth(bid_vol, ask_vol) -> float`
+- [x] Implement `compute_susceptibility(ofi_raw, depth_raw) -> float` (divide RAW, add 1e-8 to denominator)
+- [x] Implement `compute_velocity(t_k, t_km1) -> float` (1 / (gap_ms + 1e-3))
+- [x] Implement `compute_spread(ask, bid) -> float`
+- [x] Implement `compute_progress(mid, brick_open, brick_size) -> float`
+- [x] Implement `compute_flag_curr(tick_brick_id, current_brick_id) -> int`
+- [x] Implement `compute_flag_zone(mid, prev_brick_open, prev_brick_size) -> int`
+- [x] Implement `compute_decay(current_brick_id, tick_brick_id, max_depth) -> float`
 
 ### 2.4 Macro-vector computation
-- [ ] Implement `compute_macro_vector(duration_s, is_uptrend, brick_size, brick_size_history) -> np.array(3)`:
-  - [ ] `log_dur = log(duration_s + 1)`
-  - [ ] `direction = +1 if uptrend else -1`
-  - [ ] `z_size = (brick_size - mean(last_50)) / std(last_50)` (handle < 50 bricks case)
+- [x] Implement `compute_macro_vector(duration_s, is_uptrend, brick_size, brick_size_history) -> np.array(3)`:
+  - [x] `log_dur = log(duration_s + 1)`
+  - [x] `direction = +1 if uptrend else -1`
+  - [x] `z_size = (brick_size - mean(last_50)) / std(last_50)` (handle < 50 bricks case)
 
 ### 2.5 Full pipeline
-- [ ] Write `process_all_ticks(labels_df, tick_dir) -> (tick_features_per_brick, macro_vectors)`:
-  - [ ] Process ticks chronologically across all bricks
-  - [ ] Maintain 5 `RollingZScore` instances (OFI, Depth, Susc, Vel, Spread)
-  - [ ] Track brick boundaries using timestamps from labels
-  - [ ] For each tick: compute all 9 features, store in per-brick list
-  - [ ] At each brick close: compute macro-vector
-  - [ ] Save per-brick tick vectors to `outputs/features/tick_vectors_{brick_id}.npy`
-  - [ ] Save all macro-vectors to `outputs/features/macro_vectors.npy`
+- [x] Write `process_all_ticks(labels_df, tick_dir) -> (tick_features_per_brick, macro_vectors)`:
+  - [x] Process ticks chronologically across all bricks
+  - [x] Maintain 5 `RollingZScore` instances (OFI, Depth, Susc, Vel, Spread)
+  - [x] Track brick boundaries using timestamps from labels
+  - [x] For each tick: compute all 9 features, store in per-brick list
+  - [x] At each brick close: compute macro-vector
+  - [x] Save per-brick tick vectors to `outputs/features/tick_vectors_{brick_id}.npy`
+  - [x] Save all macro-vectors to `outputs/features/macro_vectors.npy`
 
 ### 2.6 Validation
-- [ ] Assert no NaN or Inf in z_Susc across entire dataset
-- [ ] Assert z_OFI non-zero when bid static but bid_vol changes (find such cases in data)
-- [ ] Print feature statistics per feature (mean, std, min, max)
-- [ ] Verify Progress resets at brick boundaries (check 5 random bricks)
-- [ ] Save `outputs/features/brick_metadata.parquet`
+- [x] Assert no NaN or Inf in z_Susc across entire dataset
+- [x] Assert z_OFI non-zero when bid static but bid_vol changes (find such cases in data)
+- [x] Print feature statistics per feature (mean, std, min, max)
+- [x] Verify Progress resets at brick boundaries (check 5 random bricks)
+- [x] Save `outputs/features/brick_metadata.parquet`
 
 ### 2.7 Unit tests (`tests/test_feature_engine.py`)
-- [ ] Test `RollingZScore` with known values (verify against numpy.mean/std)
-- [ ] Test OFI weak inequality: dBid=0, bid_vol changes → e_k ≠ 0
-- [ ] Test OFI weak inequality: dBid=0, same bid_vol → e_k = 0
-- [ ] Test Susceptibility: divide raw, not z-scores
-- [ ] Test z-score returns 0.0 when N < 30
-- [ ] Test z-score handles σ=0 gracefully
+- [x] Test `RollingZScore` with known values (verify against numpy.mean/std)
+- [x] Test OFI weak inequality: dBid=0, bid_vol changes → e_k ≠ 0
+- [x] Test OFI weak inequality: dBid=0, same bid_vol → e_k = 0
+- [x] Test Susceptibility: divide raw, not z-scores
+- [x] Test z-score returns 0.0 when N < 30
+- [x] Test z-score handles σ=0 gracefully
 
 ---
 
