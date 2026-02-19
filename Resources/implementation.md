@@ -673,8 +673,8 @@ Find optimal `Prob_Win_threshold` and `Pred_OS_threshold` on the validation set.
 
 - **Target Precision**: >= 60%
 - **Selected Prob_Win_threshold**: **0.50** (Precision > 60% achievable even at 0.18, defaulting to 0.5 for safety)
-- **Selected Pred_OS_threshold**: **1.10** (Default)
-- **Plots Generated**: `pr_curve.png`, `pred_os_dist.png`
+- **Selected Pred_OS_threshold**: **1.30** (Optimized via sensitivity analysis: 85% WR vs 79% at 1.1)
+- **Plots Generated**: `pr_curve.png`, `pred_os_dist.png`, `threshold_sensitivity.png`
 - **Config Saved**: `outputs/config.json`
 
 ### Output
