@@ -217,24 +217,24 @@
 
 ---
 
-## Phase 4.5: Signal Existence Checkpoint 2 (`src/signal_check.py`)
+## Phase 4.5: Signal Existence Checkpoint 2 (`src/signal_check_2.py`)
 
 ### 4.5.1 Feature aggregation
-- [ ] Load train and val tensors from Phase 4
-- [ ] For each brick: compute mean of each of 9 features across last 10 ticks of most recent snapshot
-- [ ] Result: 9D feature vector per brick
+- [x] Load train and val tensors from Phase 4
+- [x] For each brick: compute mean of each of 9 features across last 10 ticks of most recent snapshot
+- [x] Result: 9D feature vector per brick
 
 ### 4.5.2 Logistic regression baseline
-- [ ] Train `sklearn.linear_model.LogisticRegression(C=1.0)` on training 9D features → y_class
-- [ ] Predict on validation set
-- [ ] Compute accuracy and AUC
-- [ ] Compare against majority-class baseline accuracy
+- [x] Train `sklearn.linear_model.LogisticRegression(C=1.0)` on training 9D features → y_class
+- [x] Predict on validation set
+- [x] Compute accuracy and AUC
+- [x] Compare against majority-class baseline accuracy
 
 ### 4.5.3 Decision gate
-- [ ] If accuracy < 52%: print "🔴 RED — Features carry almost no separable signal."
-- [ ] If accuracy > 55%: print "🟢 GREEN — Strong signal, deep model should amplify."
-- [ ] If 52–55%: print "🟡 AMBER — Weak signal, proceed but manage expectations."
-- [ ] Save results to `outputs/signal_check_2.json`
+- [x] If accuracy < 52%: print "🔴 RED — Features carry almost no separable signal."
+- [x] If accuracy > 55%: print "🟢 GREEN — Strong signal, deep model should amplify."
+- [x] If 52–55%: print "🟡 AMBER — Weak signal, proceed but manage expectations."
+- [x] Save results to `outputs/signal_check_2.json`
 
 ---
 
