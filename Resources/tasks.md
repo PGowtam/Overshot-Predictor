@@ -291,10 +291,10 @@
 
 ### 6.2 Post-training diagnostics
 - [x] Plot training vs validation loss curves
-- [ ] Print Head A prediction variance on validation set
-- [ ] Print Head B prediction variance on validation set
-- [ ] If Head B std < 0.05: log WARNING about potential fallback needed
-- [ ] Print mean Pred_OS on LOSS samples from training set (target < 0.5)
+- [x] Print Head A prediction variance on validation set
+- [x] Print Head B prediction variance on validation set
+- [x] If Head B std < 0.05: log WARNING about potential fallback needed
+- [x] Print mean Pred_OS on LOSS samples from training set (target < 0.5)
 - [x] Save loss curve plot to `outputs/plots/loss_curves.png`
 
 ### 6.3 Validation

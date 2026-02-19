@@ -632,6 +632,14 @@ def hybrid_loss(y_true_class, y_pred_class, y_true_mag, y_pred_mag,
 - **Overfitting check**: Train Loss (0.62) vs Val Loss (0.65) ratio = 1.05 (< 1.5 threshold). No massive overfitting.
 - **Output**: Model saved to `outputs/model.keras`, log to `outputs/training_log.csv`.
 
+#### Phase 6 Diagnostics (Post-Training)
+
+1. **Head A Variance (Val)**: 0.078 (Std 0.28). Model is decisive.
+2. **Head B Variance (Val)**: 0.225 (Std 0.47). No collapse (Std > 0.05).
+3. **LOSS Sample Analysis (Train)**:
+   - Mean Pred_OS on LOSS samples: **0.77**
+   - Note: Slightly high (target < 0.5), but below WIN threshold (1.0). `Prob_Win` filter is critical.
+
 ---
 
 ## Phase 7: Threshold Calibration (`src/calibrate.py`)
