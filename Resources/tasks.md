@@ -147,27 +147,27 @@
 ## Phase 3: Buffer Simulation (`src/buffer_sim.py`)
 
 ### 3.1 Micro-Buffer simulation
-- [ ] Implement `simulate_micro_buffer(all_tick_vectors_per_brick) -> list[np.array(100, 9)]`:
-  - [ ] Maintain `deque(maxlen=100)`
-  - [ ] For each brick: append all tick vectors, then snapshot
-  - [ ] Zero-pad at front if buffer has < 100 ticks
-  - [ ] NEVER reset the buffer between bricks
+- [x] Implement `simulate_micro_buffer(all_tick_vectors_per_brick) -> list[np.array(100, 9)]`:
+  - [x] Maintain `deque(maxlen=100)`
+  - [x] For each brick: append all tick vectors, then snapshot
+  - [x] Zero-pad at front if buffer has < 100 ticks
+  - [x] NEVER reset the buffer between bricks
 
 ### 3.2 Save snapshots
-- [ ] Save each snapshot to `outputs/features/snapshots/snapshot_{brick_id}.npy`
-- [ ] Save metadata to `outputs/features/buffer_metadata.parquet`: brick_id, n_real_ticks, n_padded
+- [x] Save each snapshot to `outputs/features/snapshots/snapshot_{brick_id}.npy`
+- [x] Save metadata to `outputs/features/buffer_metadata.parquet`: brick_id, n_real_ticks, n_padded
 
 ### 3.3 Validation
-- [ ] Assert every snapshot has shape `(100, 9)`
-- [ ] Assert no NaN in any snapshot
-- [ ] For 5 random fast bricks (duration < 10s): verify Flag_Curr count matches expected tick count
-- [ ] Verify buffer continuity: last N ticks of brick i match first N ticks of brick i+1 (for 10 random pairs)
+- [x] Assert every snapshot has shape `(100, 9)`
+- [x] Assert no NaN in any snapshot
+- [x] For 5 random fast bricks (duration < 10s): verify Flag_Curr count matches expected tick count
+- [x] Verify buffer continuity: last N ticks of brick i match first N ticks of brick i+1 (for 10 random pairs)
 
 ### 3.4 Unit tests (`tests/test_buffer_sim.py`)
-- [ ] Test with exactly 100 ticks → no padding
-- [ ] Test with 50 ticks → 50 zeros at front
-- [ ] Test with 150 ticks over 2 bricks → buffer rolls over correctly
-- [ ] Test continuity across 3 bricks
+- [x] Test with exactly 100 ticks → no padding
+- [x] Test with 50 ticks → 50 zeros at front
+- [x] Test with 150 ticks over 2 bricks → buffer rolls over correctly
+- [x] Test continuity across 3 bricks
 
 ---
 

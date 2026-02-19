@@ -342,6 +342,15 @@ For each brick i (chronologically):
 3. For fast bricks (duration < 10s), verify that `Flag_Curr` count matches expected tick count (should be small, most flags = 0)
 4. Verify buffer continuity: the last N ticks of brick i's snapshot should match the first N ticks of brick i+1's snapshot (where N = 100 - ticks_in_brick_i+1)
 
+#### Phase 3 Results (Empirical)
+
+- **30,978 snapshots** generated in **45s**
+- **0 NaN** snapshots
+- **30,977/30,978** bricks with full buffer (100 real ticks); only brick 0 is partial (expected)
+- Flag_Curr counts match expected tick counts for all fast bricks ✅
+- Flag_Curr/Decay rewritten per snapshot: spillover ticks get `Flag_Curr=0`, `Decay=(brick_distance)/100`
+- **7/7 unit tests passed**
+
 ---
 
 ## Phase 4: Tensor Construction (`src/tensor_builder.py`)
