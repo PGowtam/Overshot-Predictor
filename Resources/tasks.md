@@ -241,37 +241,37 @@
 ## Phase 5: Model Architecture (`src/model.py`)
 
 ### 5.1 Build model
-- [ ] Implement `build_model() -> keras.Model`:
-  - [ ] CNN block with 3 parallel Conv1D branches (k=1,3,5; 16 filters; causal; LeakyReLU)
-  - [ ] MaxPool1D(4) — NOT GlobalAvgPool
-  - [ ] Flatten → Dense(32, relu) → Dropout(0.3)
-  - [ ] TimeDistributed wrapper
-  - [ ] Fusion: Concatenate CNN output (32) with macro input (3)
-  - [ ] LSTM(32, return_sequences=False) → Dropout(0.3)
-  - [ ] Head A: Dense(1, sigmoid) named 'prob_win'
-  - [ ] Head B: Dense(1, relu) named 'pred_os'
-  - [ ] L2(1e-4) on Dense and LSTM kernels
+- [x] Implement `build_model() -> keras.Model`:
+  - [x] CNN block with 3 parallel Conv1D branches (k=1,3,5; 16 filters; causal; LeakyReLU)
+  - [x] MaxPool1D(4) — NOT GlobalAvgPool
+  - [x] Flatten → Dense(32, relu) → Dropout(0.3)
+  - [x] TimeDistributed wrapper
+  - [x] Fusion: Concatenate CNN output (32) with macro input (3)
+  - [x] LSTM(32, return_sequences=False) → Dropout(0.3)
+  - [x] Head A: Dense(1, sigmoid) named 'prob_win'
+  - [x] Head B: Dense(1, relu) named 'pred_os'
+  - [x] L2(1e-4) on Dense and LSTM kernels
 
 ### 5.2 Compile model
-- [ ] Implement `compile_model(model)`:
-  - [ ] Head A loss: BinaryCrossentropy
-  - [ ] Head B loss: Huber(delta=1.0)
-  - [ ] Loss weights: {'prob_win': 1.0, 'pred_os': 0.3}
-  - [ ] Optimizer: Adam(lr=1e-3)
-  - [ ] Metrics: Head A accuracy, Head B MAE
+- [x] Implement `compile_model(model)`:
+  - [x] Head A loss: BinaryCrossentropy
+  - [x] Head B loss: Huber(delta=1.0)
+  - [x] Loss weights: {'prob_win': 1.0, 'pred_os': 0.3}
+  - [x] Optimizer: Adam(lr=1e-3)
+  - [x] Metrics: Head A accuracy, Head B MAE
 
 ### 5.3 Validation
-- [ ] Print `model.summary()` — verify ≈48K params
-- [ ] Forward pass with random input: `(2, 10, 100, 9)` + `(2, 10, 3)`
-- [ ] Assert Head A output shape: `(2, 1)`, values ∈ [0, 1]
-- [ ] Assert Head B output shape: `(2, 1)`, values ≥ 0
+- [x] Print `model.summary()` — verify ≈48K params
+- [x] Forward pass with random input: `(2, 10, 100, 9)` + `(2, 10, 3)`
+- [x] Assert Head A output shape: `(2, 1)`, values ∈ [0, 1]
+- [x] Assert Head B output shape: `(2, 1)`, values ≥ 0
 
 ### 5.4 Unit tests (`tests/test_model.py`)
-- [ ] Test model builds without error
-- [ ] Test forward pass produces correct output shapes
-- [ ] Test Head A activation is sigmoid (output bounded)
-- [ ] Test Head B activation is relu (output non-negative)
-- [ ] Test that MaxPool1D is used (not GlobalAvgPool) — check layer names
+- [x] Test model builds without error
+- [x] Test forward pass produces correct output shapes
+- [x] Test Head A activation is sigmoid (output bounded)
+- [x] Test Head B activation is relu (output non-negative)
+- [x] Test that MaxPool1D is used (not GlobalAvgPool) — check layer names
 
 ---
 

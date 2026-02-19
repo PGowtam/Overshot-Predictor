@@ -564,6 +564,17 @@ Training samples: ~24,578. Ratio: ~0.5:1. Regularization is essential.
 4. Verify Head B output ≥ 0 (relu)
 5. Ablation: replace MaxPool1D with GlobalAvgPool, verify different output
 
+#### Phase 5 Results (Verification)
+
+- **Model constructed successfully**: Dual-head CNN+LSTM
+- **Total parameters**: 48,546 (within ~48k budget)
+- **Keras 3 compatibility**: Verified (LeakyReLU `negative_slope`, shape access)
+- **4/4 unit tests passed**:
+  - Input/Output shapes correct `(None, 10, 100, 9)` / `(None, 10, 3)` → `(None, 1)` / `(None, 1)`
+  - Forward pass valid (prob_win ∈ [0,1], pred_os ≥ 0)
+  - Compilation correct (Adam, BCE+Huber)
+  - Parameter count check passed
+
 ---
 
 ## Phase 6: Training (`src/train.py`)
