@@ -278,29 +278,29 @@
 ## Phase 6: Training (`src/train.py`)
 
 ### 6.1 Training script
-- [ ] Load train/val tensors from `outputs/tensors/`
-- [ ] Load sample weights for training
-- [ ] Build and compile model
-- [ ] Set up callbacks:
-  - [ ] EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
-  - [ ] ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8)
-  - [ ] ModelCheckpoint('outputs/model.keras', save_best_only=True)
-  - [ ] CSVLogger('outputs/training_log.csv')
-- [ ] Train with `model.fit()`, batch_size=64, max_epochs=200
-- [ ] Log warnings if val_loss > 1.5 × train_loss after epoch 20
+- [x] Load train/val tensors from `outputs/tensors/`
+- [x] Load sample weights for training
+- [x] Build and compile model
+- [x] Set up callbacks:
+  - [x] EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True)
+  - [x] ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8)
+  - [x] ModelCheckpoint('outputs/model.keras', save_best_only=True)
+  - [x] CSVLogger('outputs/training_log.csv')
+- [x] Train with `model.fit()`, batch_size=64, max_epochs=200
+- [x] Log warnings if val_loss > 1.5 × train_loss after epoch 20
 
 ### 6.2 Post-training diagnostics
-- [ ] Plot training vs validation loss curves
+- [x] Plot training vs validation loss curves
 - [ ] Print Head A prediction variance on validation set
 - [ ] Print Head B prediction variance on validation set
 - [ ] If Head B std < 0.05: log WARNING about potential fallback needed
 - [ ] Print mean Pred_OS on LOSS samples from training set (target < 0.5)
-- [ ] Save loss curve plot to `outputs/plots/loss_curves.png`
+- [x] Save loss curve plot to `outputs/plots/loss_curves.png`
 
 ### 6.3 Validation
-- [ ] Assert training converges (final loss < initial loss)
-- [ ] Assert model file saved to `outputs/model.keras`
-- [ ] Assert training log saved to `outputs/training_log.csv`
+- [x] Assert training converges (final loss < initial loss)
+- [x] Assert model file saved to `outputs/model.keras`
+- [x] Assert training log saved to `outputs/training_log.csv`
 
 ---
 
