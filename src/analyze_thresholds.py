@@ -44,66 +44,51 @@ def analyze_sensitivity():
     pred_os = preds[1].flatten()
     
     # 3. Sensitivity Analysis
-    fixed_prob_th = 0.5
-    prob_mask = (prob_win >= fixed_prob_th)
+    scenarios = [
+        ("Conditional (Prob_Win >= 0.7)", 0.7),
+        ("Conditional (Prob_Win >= 0.8)", 0.8)
+    ]
     
-    thresholds = np.linspace(0.5, 2.0, 31) # 0.5 to 2.0 in 0.05 steps
-    win_rates = []
-    counts = []
-    
-    print(f"\nSensitivity Analysis (Prob_Win >= {fixed_prob_th}):")
-    print(f"{'Pred_OS Th':<12} | {'Win Rate':<10} | {'Trades':<8} | {'Win Count':<8}")
-    print("-" * 45)
-    
-    best_wr = 0
-    best_th = 0
-    
-    for th in thresholds:
-        combined_mask = prob_mask & (pred_os >= th)
-        n_trades = np.sum(combined_mask)
+    thresholds = np.linspace(0.5, 2.0, 31)
+
+    for name, min_prob in scenarios:
+        prob_mask = (prob_win >= min_prob)
+        print(f"\nAnalysis: {name}")
+        print(f"{'Pred_OS Th':<12} | {'Win Rate':<10} | {'Trades':<8} | {'Win Count':<8}")
+        print("-" * 45)
         
-        if n_trades > 0:
-            # Win defined as y_mag >= 1.0 (or y_class == 1, should match)
-            # Using y_class for ground truth win
-            wins = y_class[combined_mask]
-            n_wins = np.sum(wins)
-            wr = n_wins / n_trades
-            win_rates.append(wr)
-            counts.append(n_trades)
+        best_wr = 0
+        best_th = 0
+        
+        counts_for_plot = []
+        wrs_for_plot = []
+
+        for th in thresholds:
+            combined_mask = prob_mask & (pred_os >= th)
+            n_trades = np.sum(combined_mask)
             
-            if wr > best_wr and n_trades >= 50: # Min sample constraint
-                best_wr = wr
-                best_th = th
-            
-            print(f"{th:<12.2f} | {wr:<10.2%} | {n_trades:<8} | {n_wins:<8}")
-        else:
-            win_rates.append(0)
-            counts.append(0)
-            print(f"{th:<12.2f} | {'N/A':<10} | {0:<8} | {0:<8}")
+            if n_trades > 0:
+                wins = y_class[combined_mask]
+                n_wins = np.sum(wins)
+                wr = n_wins / n_trades
+                wrs_for_plot.append(wr)
+                counts_for_plot.append(n_trades)
+                
+                if wr > best_wr and n_trades >= 50:
+                    best_wr = wr
+                    best_th = th
+                
+                print(f"{th:<12.2f} | {wr:<10.2%} | {n_trades:<8} | {n_wins:<8}")
+            else:
+                wrs_for_plot.append(0)
+                counts_for_plot.append(0)
+                print(f"{th:<12.2f} | {'N/A':<10} | {0:<8} | {0:<8}")
 
-    # 4. Plot
-    fig, ax1 = plt.subplots(figsize=(10, 6))
+        print(f"\n🏆 Best Threshold (min 50 trades): {best_th:.2f} (WR: {best_wr:.2%})")
 
-    color = 'tab:blue'
-    ax1.set_xlabel('Pred_OS Threshold')
-    ax1.set_ylabel('Win Rate', color=color)
-    ax1.plot(thresholds, win_rates, color=color, marker='o', label='Win Rate')
-    ax1.tick_params(axis='y', labelcolor=color)
-    ax1.grid(True, alpha=0.3)
-    ax1.set_ylim(0.4, 1.0) # Zoom in on relevant range
+    # 4. Plot (Only for fitst scenario to avoid clutter?)
+    # ...
 
-    ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-    color = 'tab:orange'
-    ax2.set_ylabel('Trade Count', color=color)  # we already handled the x-label with ax1
-    ax2.plot(thresholds, counts, color=color, linestyle='--', label='Count')
-    ax2.tick_params(axis='y', labelcolor=color)
-
-    plt.title(f'Win Rate vs Pred_OS Threshold (Prob_Win >= {fixed_prob_th})')
-    fig.tight_layout()  # otherwise the right y-label is slightly clipped
-    plt.savefig(PLOT_DIR / "threshold_sensitivity.png")
-    print(f"\n📊 Sensitivity plot saved to {PLOT_DIR / 'threshold_sensitivity.png'}")
-    
-    print(f"\n🏆 Best Threshold (min 50 trades): {best_th:.2f} (WR: {best_wr:.2%})")
 
 if __name__ == "__main__":
     analyze_sensitivity()
