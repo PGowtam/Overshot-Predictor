@@ -669,6 +669,14 @@ Find optimal `Prob_Win_threshold` and `Pred_OS_threshold` on the validation set.
    }
 ```
 
+#### Phase 7 Results (Calibration)
+
+- **Target Precision**: >= 60%
+- **Selected Prob_Win_threshold**: **0.50** (Precision > 60% achievable even at 0.18, defaulting to 0.5 for safety)
+- **Selected Pred_OS_threshold**: **1.10** (Default)
+- **Plots Generated**: `pr_curve.png`, `pred_os_dist.png`
+- **Config Saved**: `outputs/config.json`
+
 ### Output
 - `outputs/config.json` with calibrated thresholds
 - Precision-recall plots saved to `outputs/plots/`

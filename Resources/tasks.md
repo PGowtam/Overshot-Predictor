@@ -307,24 +307,24 @@
 ## Phase 7: Threshold Calibration (`src/calibrate.py`)
 
 ### 7.1 Generate validation predictions
-- [ ] Load trained model from `outputs/model.keras`
-- [ ] Load validation tensors
-- [ ] Generate predictions: `Prob_Win`, `Pred_OS` for all val bricks
+- [x] Load trained model from `outputs/model.keras`
+- [x] Load validation tensors
+- [x] Generate predictions: `Prob_Win`, `Pred_OS` for all val bricks
 
 ### 7.2 Calibrate Head A threshold
-- [ ] Compute precision-recall curve
-- [ ] Find Prob_Win_threshold where precision ≥ 0.60
-- [ ] Plot precision-recall curve → `outputs/plots/pr_curve.png`
+- [x] Compute precision-recall curve
+- [x] Find Prob_Win_threshold where precision ≥ 0.60
+- [x] Plot precision-recall curve → `outputs/plots/pr_curve.png`
 
 ### 7.3 Calibrate Head B threshold
-- [ ] Separate Pred_OS predictions by actual WIN vs LOSS
-- [ ] Plot overlapping distributions → `outputs/plots/pred_os_dist.png`
-- [ ] Find Pred_OS_threshold where WIN distribution clearly dominates LOSS
-- [ ] Start from 1.1, adjust based on distributions
+- [x] Separate Pred_OS predictions by actual WIN vs LOSS
+- [x] Plot overlapping distributions → `outputs/plots/pred_os_dist.png`
+- [x] Find Pred_OS_threshold where WIN distribution clearly dominates LOSS
+- [x] Start from 1.1, adjust based on distributions
 
 ### 7.4 Save config
-- [ ] Write `outputs/config.json` with calibrated thresholds
-- [ ] Print selected thresholds and their justification metrics
+- [x] Write `outputs/config.json` with calibrated thresholds
+- [x] Print selected thresholds and their justification metrics
 
 ---
 
