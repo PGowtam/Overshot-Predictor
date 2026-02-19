@@ -444,6 +444,20 @@ holdout_y_mag.npy   # (N_holdout,)
 5. Verify `exclude_flag` bricks are NOT in ANY split
 6. Verify `duration < 2s` bricks are NOT in training but ARE in val/test
 
+#### Phase 4 Results (Empirical)
+
+- **28,969 samples** built in **20s**
+- 415 excluded bricks filtered, 1,584 fast bricks (<2s) removed from training
+- 221 training samples downweighted (chain_depth > 5)
+- **13/13 unit tests passed**
+
+| Split | N | WIN | LOSS | WR | Date Range |
+|---|---|---|---|---|---|
+| train | 24,263 | 12,049 | 12,214 | 0.497 | 2020-01 → 2022-12 |
+| val | 2,882 | 1,493 | 1,389 | 0.518 | 2023-01 → 2023-06 |
+| test | 1,824 | 934 | 890 | 0.512 | 2023-07 → 2023-12 |
+| holdout | 0 | — | — | — | No 2024 data in labels |
+
 ---
 
 ## Phase 4.5: Signal Existence Checkpoint 2 (`src/signal_check.py`)

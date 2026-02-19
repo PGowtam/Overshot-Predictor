@@ -174,46 +174,46 @@
 ## Phase 4: Tensor Construction (`src/tensor_builder.py`)
 
 ### 4.1 Tensor assembly
-- [ ] Write `build_tensors(snapshots, macro_vectors, labels) -> dict`:
-  - [ ] For each brick i ≥ 10: stack last 10 snapshots → `(10, 100, 9)`
-  - [ ] Stack last 10 macro-vectors → `(10, 3)`
-  - [ ] Pair with (y_class, y_mag, duration, date, brick_id)
+- [x] Write `build_tensors(snapshots, macro_vectors, labels) -> dict`:
+  - [x] For each brick i ≥ 10: stack last 10 snapshots → `(10, 100, 9)`
+  - [x] Stack last 10 macro-vectors → `(10, 3)`
+  - [x] Pair with (y_class, y_mag, duration, date, brick_id)
 
 ### 4.2 Walk-forward split
-- [ ] Implement split assignment:
-  - [ ] Train: date < 2023-01-01
-  - [ ] Val: 2023-01-01 ≤ date < 2023-07-01
-  - [ ] Test: 2023-07-01 ≤ date < 2024-01-01
-  - [ ] Holdout: date ≥ 2024-01-01
+- [x] Implement split assignment:
+  - [x] Train: date < 2023-01-01
+  - [x] Val: 2023-01-01 ≤ date < 2023-07-01
+  - [x] Test: 2023-07-01 ≤ date < 2024-01-01
+  - [x] Holdout: date ≥ 2024-01-01
 
 ### 4.3 Training exclusions
-- [ ] Drop `exclude_flag = True` bricks from ALL splits (invalid labels)
-- [ ] Remove bricks with `duration < 2s` from training set only (valid labels, but spillover-dominated)
-- [ ] Compute fast-brick chain depth per brick
-- [ ] Assign `sample_weight = 0.5` for `chain_depth > 5`, else `1.0`
-- [ ] Keep all non-excluded bricks in val/test
+- [x] Drop `exclude_flag = True` bricks from ALL splits (invalid labels)
+- [x] Remove bricks with `duration < 2s` from training set only (valid labels, but spillover-dominated)
+- [x] Compute fast-brick chain depth per brick
+- [x] Assign `sample_weight = 0.5` for `chain_depth > 5`, else `1.0`
+- [x] Keep all non-excluded bricks in val/test
 
 ### 4.4 Save tensors
-- [ ] Save train/val/test/holdout splits as `.npy` files:
-  - [ ] `{split}_micro.npy`, `{split}_macro.npy`
-  - [ ] `{split}_y_class.npy`, `{split}_y_mag.npy`
-  - [ ] `train_weights.npy`
-- [ ] Save split metadata: brick counts, date ranges, class balance
+- [x] Save train/val/test/holdout splits as `.npy` files:
+  - [x] `{split}_micro.npy`, `{split}_macro.npy`
+  - [x] `{split}_y_class.npy`, `{split}_y_mag.npy`
+  - [x] `train_weights.npy`
+- [x] Save split metadata: brick counts, date ranges, class balance
 
 ### 4.5 Validation
-- [ ] Assert zero date overlap between train/val/test/holdout
-- [ ] Assert all micro tensors shape: `(10, 100, 9)`
-- [ ] Assert all macro tensors shape: `(10, 3)`
-- [ ] Assert no NaN in any tensor
-- [ ] Print split sizes and WIN/LOSS ratio per split
-- [ ] Assert `exclude_flag` bricks NOT in any split
-- [ ] Assert `duration < 2s` bricks NOT in training but present in val/test
+- [x] Assert zero date overlap between train/val/test/holdout
+- [x] Assert all micro tensors shape: `(10, 100, 9)`
+- [x] Assert all macro tensors shape: `(10, 3)`
+- [x] Assert no NaN in any tensor
+- [x] Print split sizes and WIN/LOSS ratio per split
+- [x] Assert `exclude_flag` bricks NOT in any split
+- [x] Assert `duration < 2s` bricks NOT in training but present in val/test
 
 ### 4.6 Unit tests (`tests/test_tensor_builder.py`)
-- [ ] Test split assignment with known dates
-- [ ] Test chain depth calculation
-- [ ] Test that brick_id < 10 produces no tensor (not enough context)
-- [ ] Test sample weight assignment
+- [x] Test split assignment with known dates
+- [x] Test chain depth calculation
+- [x] Test that brick_id < 10 produces no tensor (not enough context)
+- [x] Test sample weight assignment
 
 ---
 
