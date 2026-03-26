@@ -760,10 +760,24 @@ Triggered if holdout (2024) WR < 55%:
   - **Pred_OS > 1.0**: **99.45%**. **TARGET MET**.
   - **Pearson r**: **0.076**. **TARGET MISS**.
 
-### Volume Mitigation
-- Not triggered (Baseline WR > 60%).
+### Volume Mitigation — Results
 
-## Phase 9: Backtest Analysis
+| Model | Test WR | Trades | Holdout WR | Trades |
+|-------|---------|--------|------------|--------|
+| Baseline (9 features) | **86.81%** | 470 | **87.75%** | 1,608 |
+| Ablated (6 features, no volume) | **87.15%** | 537 | **85.36%** | 2,077 |
+| Tick Direction (sign(ΔProgress)) | **89.93%** | 417 | **88.25%** | 1,532 |
+
+**Conclusion**: Volume features add <1% WR on Test. Model is **NOT volume-dependent**. Tick Direction encoding slightly outperforms baseline.
+
+**Permutation Feature Importance** (ΔWR when shuffled):
+- Progress: +1.06%, z_Vel: +0.67%, z_Spread: +0.58%
+- z_OFI: -0.60%, z_Susc: -0.61%, z_Depth: -0.41%
+- Flag_Curr: +0.38%, Flag_Zone: -0.17%, Decay: 0.00%
+
+No single feature dominates. The model learns from the ensemble, not individual features.
+
+## Phase 8.5: Backtest Analysis
 Backtest on Holdout (2024) with $10k initial capital, +/- 0.5% per trade.
 
 - **Final Equity**: **$4,240,919.66** (+42,309%).
@@ -771,6 +785,17 @@ Backtest on Holdout (2024) with $10k initial capital, +/- 0.5% per trade.
 - **Sharpe Ratio**: **46.17**.
 - **Win Rate**: **87.75%** (1,608 trades).
 - **Interpretation**: Extremely high performance due to high win rate compound effect. Assumes perfect execution at 1:1 R/R.
+
+## Phase 8.7: Baiting Strategy (Loss Prediction)
+We exploit the model's "uncertainty" as a signal for reversal.
+- **Hypothesis**: When `Prob_Win < 0.2` and `Pred_OS < 0.7`, the model is wrong about direction > 88% of time.
+- **Action**: Take a REVERSAL trade (bet against model).
+- **Results (2024)**:
+  - **Reversal Trades**: 1,120 trades with **88.75% Win Rate**.
+  - **Combined Strategy**: Standard + Baiting.
+  - **Total Trades**: 2,728.
+  - **Final Equity**: **$320,799,442** (+3,207,894%).
+  - **Max Drawdown**: -1.49%.
 
 ---
 3. Pred_OS distribution: WIN vs LOSS → `outputs/plots/test_pred_os.png`
