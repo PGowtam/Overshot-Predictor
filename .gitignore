@@ -53,3 +53,8 @@ temp_ticks*/
 
 # Config with secrets (if any)
 .env
+
+
+# Production Models (Un-ignore for trader build)
+!BrickOfTicks_Trader/models/**/*.keras
+!BrickOfTicks_Trader/models/**/*.json

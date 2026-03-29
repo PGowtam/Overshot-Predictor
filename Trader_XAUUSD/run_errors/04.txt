@@ -1,0 +1,61 @@
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> venv\Scripts\python main.py
+2026-01-27 20:32:31.067054: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-01-27 20:32:34.830171: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+Welcome to MT5 Renko Trader (RL Ensemble)
+2026-01-27 20:32:40 | INFO     | features        | Initializing Feature Engineer...
+Regime models loaded successfully.
+2026-01-27 20:32:40.811468: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.  
+
+BiLSTM Model loaded successfully.
+2026-01-27 20:32:41 | INFO     | ensemble        | Loading Ensemble Agents...
+2026-01-27 20:32:43 | INFO     | ensemble        | Loaded ppo
+2026-01-27 20:32:43 | INFO     | ensemble        | Loaded dqn
+2026-01-27 20:32:43 | INFO     | ensemble        | Loaded qrdqn
+2026-01-27 20:32:43 | INFO     | ensemble        | Loaded recurrent
+2026-01-27 20:32:43 | INFO     | ensemble        | Loaded transformer
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LogisticRegression from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StackingClassifier from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 20:32:44 | INFO     | predictors      | Binary Outcome Model loaded.
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 20:32:44 | INFO     | predictors      | Binary Scaler loaded.
+2026-01-27 20:32:44 | INFO     | predictors      | Multi-class Outcome Model loaded.
+2026-01-27 20:32:44 | INFO     | predictors      | Multi Scaler loaded.
+2026-01-27 20:32:44 | INFO     | connector       | MT5 Connected. Code: (1, 'Success')
+2026-01-27 20:32:44 | INFO     | tick_buffer     | TickStream initialized starting from: 1769533362593
+2026-01-27 20:32:44 | INFO     | orbit           | Fetching M1 History for Optimization (7 Days)...
+2026-01-27 20:32:46 | INFO     | renko_optimizer | Optimization Results: BS=5.9150, Offset=4678.7596, PnL=216.0
+2026-01-27 20:32:46 | INFO     | orbit           | Replaying history to sync Renko state (Size: 5.91496)...
+2026-01-27 20:32:46 | INFO     | orbit           | Saved Warmup Renko Snapshot to: renkos\renko_2026-01-27_20-32-46.csv (58 bricks)
+2026-01-27 20:32:46 | INFO     | orbit           | Orbit Started. Brick: 5.9150
+2026-01-27 20:33:56 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5062.374736800001), close=np.float64(5068.289699200001), high=np.float64(5068.289699200001), low=np.float64(5062.374736800001), uptrend=True, timestamp=np.int64(1769533434433), sequence='00011111111000000110111111101101111100110000111000001110001')
+2026-01-27 20:33:56 | INFO     | orbit           | Ensemble Vote: 4.5705 -> Action: 1
+Fatal Error: name 'mt5' is not defined
+Traceback (most recent call last):
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 15, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 11, in main
+    engine.run()
+    ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 582, in run
+    if not self.pulse():
+           ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 373, in pulse        
+    self.process_signal(brick)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 512, in process_signal
+    current_price = mt5.symbol_info_tick(SYMBOL).ask
+                    ^^^
+NameError: name 'mt5' is not defined
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> 

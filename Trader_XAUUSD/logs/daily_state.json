@@ -1,0 +1,18 @@
+{
+    "last_processed_time_msc": 0,
+    "current_day": null,
+    "daily_pnl": -3.0,
+    "trades_today": 0,
+    "active_ticket": 0,
+    "active_entry_price": 0.0,
+    "active_direction": -1,
+    "pending_ticket": 0,
+    "pending_be_level": 4710.408733080356,
+    "pending_direction": -1,
+    "optimization": {
+        "brick_size": 0.0,
+        "grid_offset": 0.0
+    },
+    "active_tickets": [],
+    "active_ticket_details": {}
+}

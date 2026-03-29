@@ -1,0 +1,85 @@
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> venv\Scripts\python main.py
+2026-01-27 20:12:46.032044: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-01-27 20:12:48.998843: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+Welcome to MT5 Renko Trader (RL Ensemble)
+2026-01-27 20:12:53 | INFO     | features        | Initializing Feature Engineer...
+Regime models loaded successfully.
+2026-01-27 20:12:53.768303: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.  
+
+BiLSTM Model loaded successfully.
+2026-01-27 20:12:54 | INFO     | ensemble        | Loading Ensemble Agents...
+2026-01-27 20:12:56 | INFO     | ensemble        | Loaded ppo
+2026-01-27 20:12:56 | INFO     | ensemble        | Loaded dqn
+2026-01-27 20:12:56 | INFO     | ensemble        | Loaded qrdqn
+2026-01-27 20:12:56 | INFO     | ensemble        | Loaded recurrent
+2026-01-27 20:12:56 | INFO     | ensemble        | Loaded transformer
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LogisticRegression from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StackingClassifier from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 20:12:56 | INFO     | predictors      | Binary Outcome Model loaded.
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 20:12:56 | INFO     | predictors      | Binary Scaler loaded.
+2026-01-27 20:12:57 | INFO     | predictors      | Multi-class Outcome Model loaded.
+2026-01-27 20:12:57 | INFO     | predictors      | Multi Scaler loaded.
+2026-01-27 20:12:57 | INFO     | connector       | MT5 Connected. Code: (1, 'Success')
+2026-01-27 20:12:57 | INFO     | tick_buffer     | TickStream initialized starting from: 1769532175378
+2026-01-27 20:12:57 | INFO     | orbit           | Fetching M1 History for Optimization (7 Days)...
+2026-01-27 20:12:59 | INFO     | renko_optimizer | Optimization Results: BS=5.9150, Offset=4678.7596, PnL=214.0
+2026-01-27 20:12:59 | INFO     | orbit           | Replaying history to sync Renko state (Size: 5.91496)...
+2026-01-27 20:12:59 | INFO     | orbit           | Saved Warmup Renko Snapshot to: renkos\renko_2026-01-27_20-12-59.csv (61 bricks)
+2026-01-27 20:12:59 | INFO     | orbit           | Orbit Started. Brick: 5.9150
+2026-01-27 20:18:27 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5074.7448872), close=np.float64(5068.8299248), high=np.float64(5074.7448872), low=np.float64(5068.8299248), uptrend=False, timestamp=np.int64(1769532506414), sequence='00000000011111111000000110111111101101111100011100001100001110')
+2026-01-27 20:18:27 | ERROR    | features        | Indicator Calc Error: 'date'
+Fatal Error: Error: Unexpected observation shape (10, 21) for Box environment, please use (210,) or (n_env, 210) for the observation shape.
+Traceback (most recent call last):
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 15, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 11, in main
+    engine.run()
+    ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 582, in run
+    if not self.pulse():
+           ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 373, in pulse        
+    self.process_signal(brick)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 474, in process_signal
+    action, self.lstm_states, score = self.ensemble.predict(
+                                      ~~~~~~~~~~~~~~~~~~~~~^
+        obs,
+        ^^^^
+    ...<2 lines>...
+        obs_stack=stack_arr
+        ^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\models\ensemble.py", line 126, in predict      
+    act, _ = self.models['transformer'].predict(obs_stack, deterministic=True)
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\stable_baselines3\common\base_class.py", line 557, in predict
+    return self.policy.predict(observation, state, episode_start, deterministic)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\stable_baselines3\common\policies.py", line 365, in predict
+    obs_tensor, vectorized_env = self.obs_to_tensor(observation)
+                                 ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\stable_baselines3\common\policies.py", line 272, in obs_to_tensor
+    vectorized_env = is_vectorized_observation(observation, self.observation_space)
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\stable_baselines3\common\utils.py", line 489, in is_vectorized_observation
+    return is_vec_obs_func(observation, observation_space)  # type: ignore[operator]
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\stable_baselines3\common\utils.py", line 356, in is_vectorized_box_observation
+    raise ValueError(
+    ...<3 lines>...
+    )
+ValueError: Error: Unexpected observation shape (10, 21) for Box environment, please use (210,) or (n_env, 210) for the observation shape.
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> 

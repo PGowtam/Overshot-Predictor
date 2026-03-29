@@ -1,0 +1,62 @@
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement> venv\Scripts\python main.py
+venv\Scripts\python: The module 'venv' could not be loaded. For more information, run 'Import-Module venv'.
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement> cd trader
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> venv\Scripts\python main.py
+2026-01-28 07:25:38.318038: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-01-28 07:25:51.463782: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+Welcome to MT5 Renko Trader (RL Ensemble)
+2026-01-28 07:26:17 | INFO     | features        | Initializing Feature Engineer...
+Regime models loaded successfully.
+2026-01-28 07:26:17.202376: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.  
+
+BiLSTM Model loaded successfully.
+2026-01-28 07:26:18 | INFO     | ensemble        | Loading Ensemble Agents...
+2026-01-28 07:26:22 | INFO     | ensemble        | Loaded ppo
+2026-01-28 07:26:22 | INFO     | ensemble        | Loaded dqn
+2026-01-28 07:26:22 | INFO     | ensemble        | Loaded qrdqn
+2026-01-28 07:26:22 | INFO     | ensemble        | Loaded recurrent
+2026-01-28 07:26:22 | INFO     | ensemble        | Loaded transformer
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LogisticRegression from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StackingClassifier from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-28 07:26:23 | INFO     | predictors      | Binary Outcome Model loaded.
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-28 07:26:23 | INFO     | predictors      | Binary Scaler loaded.
+2026-01-28 07:26:24 | INFO     | predictors      | Multi-class Outcome Model loaded.
+2026-01-28 07:26:24 | INFO     | predictors      | Multi Scaler loaded.
+2026-01-28 07:26:38 | INFO     | connector       | MT5 Connected. Code: (1, 'Success')
+2026-01-28 07:26:38 | INFO     | tick_buffer     | TickStream initialized starting from: 1769467769842
+2026-01-28 07:26:40 | INFO     | orbit           | Fetching M1 History for Optimization (7 Days)...
+2026-01-28 07:26:44 | INFO     | renko_optimizer | Optimization Results: BS=6.1119, Offset=4749.1027, PnL=223.0
+2026-01-28 07:26:44 | INFO     | orbit           | Replaying history to sync Renko state (Size: 6.11194)...
+2026-01-28 07:26:44 | INFO     | orbit           | Saved Warmup Renko Snapshot to: renkos\renko_2026-01-28_07-26-44.csv (81 bricks)
+2026-01-28 07:26:44 | INFO     | orbit           | Orbit Started. Brick: 6.1119
+2026-01-28 07:26:51 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5213.790735800001), close=np.float64(5207.678796000001), high=np.float64(5213.790735800001), low=np.float64(5207.678796000001), uptrend=False, timestamp=np.int64(1769467770028), sequence='0110000111010000001111000011011111100111111111101011111110110010001111110001111110')
+Fatal Error: 'RenkoBuilder' object has no attribute 'brick_count'
+Traceback (most recent call last):
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 15, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 11, in main
+    engine.run()
+    ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 597, in run
+    if not self.pulse():
+           ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 388, in pulse        
+    self.process_signal(brick)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 481, in process_signal
+    if self.renko.brick_count % 10 == 0:
+       ^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'RenkoBuilder' object has no attribute 'brick_count'

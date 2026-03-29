@@ -282,4 +282,11 @@ M2_new = M2_old + (x_new - x_old) * ((x_new - μ_new) + (x_old - μ_old))
 
 ### Planned Post-Pipeline Phase
 
-**Phase 9: Market Realism Recalibration** — After Phases 1–8 complete with mid-price scanning, re-run the entire pipeline with execution-realistic pricing (bid for LONG exits, ask for SHORT exits). Compare model performance to determine which pricing yields a genuine, tradeable edge. Motivated by the finding that mid-price scanning introduces a directional asymmetry (LONG 57.5% WIN vs SHORT 42.7%) that doesn't reflect real execution.
+**Phase 9: Market Realism Recalibration** — After Phases 1–8 complete with mid-price scanning, recalibrate the pipeline using execution-realistic pricing (bid for LONG exits, ask for SHORT exits). Two-pronged approach:
+
+1. **Option A (Quick Check)**: Re-evaluate the existing mid-price model against execution-priced labels. Answers: *"If we deployed this model today, what's the real WR?"*
+2. **Option B (Full Re-run)**: Retrain a completely new model on execution-priced labels. Re-run features → buffers → tensors → training → calibration. Answers: *"Does the model learn better patterns when trained on realistic labels?"*
+
+**Comprehensive Benchmark**: Compare mid-price model, mid-price model on exec labels, and exec-price model across all metrics (WR, Sharpe, MaxDD, directional balance). Determine which pricing yields a genuine, tradeable edge.
+
+Motivated by the finding that mid-price scanning introduces a directional asymmetry (LONG 57.5% WIN vs SHORT 42.7%) that doesn't reflect real execution.

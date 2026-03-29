@@ -1,0 +1,64 @@
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> venv\Scripts\python main.py
+2026-01-27 02:06:13.945507: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-01-27 02:06:18.346781: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+Welcome to MT5 Renko Trader (RL Ensemble)
+2026-01-27 02:06:23 | INFO     | features        | Initializing Feature Engineer...      
+Regime models loaded successfully.
+2026-01-27 02:06:23.863373: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.
+
+BiLSTM Model loaded successfully.
+2026-01-27 02:06:24 | INFO     | ensemble        | Loading Ensemble Agents...
+2026-01-27 02:06:26 | INFO     | ensemble        | Loaded ppo
+2026-01-27 02:06:26 | INFO     | ensemble        | Loaded dqn
+2026-01-27 02:06:26 | INFO     | ensemble        | Loaded qrdqn
+2026-01-27 02:06:26 | INFO     | ensemble        | Loaded recurrent
+2026-01-27 02:06:26 | ERROR    | ensemble        | Failed to load transformer: No module named 'RL_Agent_Final'
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LogisticRegression from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StackingClassifier from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 02:06:26 | INFO     | predictors      | Binary Outcome Model loaded.
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 02:06:26 | INFO     | predictors      | Binary Scaler loaded.
+2026-01-27 02:06:26 | INFO     | predictors      | Multi-class Outcome Model loaded.
+2026-01-27 02:06:26 | INFO     | predictors      | Multi Scaler loaded.
+2026-01-27 02:06:26 | INFO     | connector       | MT5 Connected. Code: (1, 'Success')
+2026-01-27 02:06:26 | INFO     | tick_buffer     | TickStream initialized starting from: 1769466985207
+2026-01-27 02:06:27 | INFO     | orbit           | Fetching M1 History for Optimization (7 Days)...
+2026-01-27 02:06:29 | INFO     | renko_optimizer | Optimization Results: BS=5.9339, Offset=4760.0322, PnL=176.0
+2026-01-27 02:06:29 | INFO     | orbit           | Replaying history to sync Renko state (Size: 5.93393)...
+2026-01-27 02:06:29 | INFO     | orbit           | Saved Warmup Renko Snapshot to: renkos\renko_2026-01-27_02-06-29.csv (72 bricks)
+2026-01-27 02:06:29 | INFO     | orbit           | Orbit Started. Brick: 5.9339
+2026-01-27 02:07:24 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5051.354299999999), close=np.float64(5045.420374999999), high=np.float64(5051.354299999999), low=np.float64(5045.420374999999), uptrend=False, timestamp=np.int64(1769474242920), sequence='0001110111110001010100010001111100111000011110000011000001000010001111110') 
+2026-01-27 02:07:24 | ERROR    | features        | Indicator Calc Error: 'TechnicalIndicators' object has no attribute 'update_live_data'
+Fatal Error: Feature Extraction Error: Brick missing valid timestamp. Got: 1769474242920 
+Traceback (most recent call last):
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 15, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\main.py", line 11, in main
+    engine.run()
+    ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 327, in run
+    if not self.pulse():
+           ~~~~~~~~~~^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 222, in pulse
+    self.process_signal(brick)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\execution\orbit.py", line 267, in process_signal
+    preds = self.predictors.predict(brick, self.renko.history[:-1], ind_dict)
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\models\predictors.py", line 173, in predict
+    raw_feats = self._extract_predictor_features(brick, prev_bricks, indicators_dict)    
+  File "C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\models\predictors.py", line 75, in _extract_predictor_features
+    raise ValueError(f"Feature Extraction Error: Brick missing valid timestamp. Got: {getattr(brick, 'timestamp', 'None')}")
+ValueError: Feature Extraction Error: Brick missing valid timestamp. Got: 1769474242920  
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> 

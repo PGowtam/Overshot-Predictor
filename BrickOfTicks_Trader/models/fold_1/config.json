@@ -1,0 +1,7 @@
+{
+  "Prob_Win_threshold": 0.5,
+  "Pred_OS_threshold": 1.6,
+  "z_score_window": 1000,
+  "micro_buffer_size": 100,
+  "macro_history_size": 10
+}

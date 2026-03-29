@@ -6,7 +6,8 @@ Enriches every Renko brick with y_class, y_mag, duration_seconds by scanning L1 
 Key conventions:
 - entry_price = brick.close (bid-based, preserves per-brick ordering)
 - TP/SL levels computed from entry_price ± brick_size
-- ALL tick scanning uses mid-price: mid = (bid + ask) / 2
+- pricing_mode='mid': ALL tick scanning uses mid-price: mid = (bid + ask) / 2
+- pricing_mode='execution': LONG scans with bid, SHORT scans with ask (real market)
 - y_class derived from hybrid algorithm (tp_hit), NOT from CSV outcome column
 - CSV outcome retained as validation reference only
 """
@@ -96,10 +97,11 @@ def load_ticks_range(start_time: pd.Timestamp, max_days: int = MAX_SCAN_DAYS) ->
 
 
 def calculate_true_overshoot(entry: float, brick_size: float, is_long: bool,
-                              future_ticks: pd.DataFrame) -> dict:
+                              future_ticks: pd.DataFrame,
+                              pricing_mode: str = "mid") -> dict:
     """Compute y_mag using the hybrid overshoot algorithm (FR-LG-01).
 
-    Phase 1 (pre-TP): Scan ticks using mid-price. Track peak extension.
+    Phase 1 (pre-TP): Scan ticks. Track peak extension.
         Reversal = fixed SL level. If SL hit → LOSS.
     Phase 2 (post-TP): Switch to dynamic 1-brick-size trailing reversal from peak.
         Continue until trailing reversal triggered.
@@ -110,6 +112,9 @@ def calculate_true_overshoot(entry: float, brick_size: float, is_long: bool,
         is_long: True for LONG (uptrend), False for SHORT.
         future_ticks: DataFrame with columns [timestamp, bid, ask].
                       Must contain ticks AFTER the brick close.
+        pricing_mode: 'mid' = use (bid+ask)/2 for scanning (original).
+                      'execution' = use bid for LONG exits, ask for SHORT exits
+                      (matches real market execution).
 
     Returns:
         dict with keys:
@@ -133,26 +138,32 @@ def calculate_true_overshoot(entry: float, brick_size: float, is_long: bool,
     asks = future_ticks["ask"].values
 
     for i in range(len(bids)):
-        mid = (bids[i] + asks[i]) / 2.0
+        # Pricing mode determines which price is used for scanning
+        if pricing_mode == "execution":
+            # Real execution: LONG exits at bid, SHORT exits at ask
+            scan_price = bids[i] if is_long else asks[i]
+        else:
+            # Original mid-price scanning
+            scan_price = (bids[i] + asks[i]) / 2.0
 
         # Track peak extension in favorable direction
         if is_long:
-            peak = max(peak, mid)
+            peak = max(peak, scan_price)
         else:
-            peak = min(peak, mid)
+            peak = min(peak, scan_price)
 
         # Phase 1: Before TP — check SL (fixed level)
         if not tp_hit:
-            if (is_long and mid >= tp) or (not is_long and mid <= tp):
+            if (is_long and scan_price >= tp) or (not is_long and scan_price <= tp):
                 tp_hit = True
                 continue  # TP just hit, don't check reversal on same tick
-            if (is_long and mid <= sl) or (not is_long and mid >= sl):
+            if (is_long and scan_price <= sl) or (not is_long and scan_price >= sl):
                 break  # SL hit → LOSS
         # Phase 2: After TP — trailing reversal check
         else:
-            if is_long and mid <= peak - brick_size:
+            if is_long and scan_price <= peak - brick_size:
                 break
-            if not is_long and mid >= peak + brick_size:
+            if not is_long and scan_price >= peak + brick_size:
                 break
     else:
         # Loop completed without break → tick data exhausted before resolution
@@ -187,7 +198,8 @@ def compute_duration(brick_close_time: pd.Timestamp,
 # 1.2 Batch Processing
 # ═══════════════════════════════════════════════════════════════
 
-def generate_all_labels(renko_csv_path: str = None, tick_dir: str = None) -> pd.DataFrame:
+def generate_all_labels(renko_csv_path: str = None, tick_dir: str = None,
+                        pricing_mode: str = "mid") -> pd.DataFrame:
     """Generate y_class, y_mag, duration_seconds for every brick in the Renko CSV.
 
     Args:
@@ -265,7 +277,8 @@ def generate_all_labels(renko_csv_path: str = None, tick_dir: str = None) -> pd.
             future_ticks = load_ticks_range(brick_close_time, max_days=MAX_SCAN_DAYS)
 
         # Run hybrid overshoot algorithm
-        result = calculate_true_overshoot(entry_price, brick_size, is_long, future_ticks)
+        result = calculate_true_overshoot(entry_price, brick_size, is_long, future_ticks,
+                                             pricing_mode=pricing_mode)
 
         if not result["resolved"] or result["y_class"] is None:
             df.at[idx, "exclude_flag"] = True

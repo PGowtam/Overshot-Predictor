@@ -1,0 +1,177 @@
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> venv\Scripts\python main.py                        
+2026-01-27 19:41:47.311763: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+2026-01-27 19:41:57.326220: I tensorflow/core/util/port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+Welcome to MT5 Renko Trader (RL Ensemble)
+2026-01-27 19:42:14 | INFO     | features        | Initializing Feature Engineer...
+Regime models loaded successfully.
+2026-01-27 19:42:14.551751: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX512F AVX512_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:From C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\keras\src\backend\tensorflow\core.py:232: The name tf.placeholder is deprecated. Please use tf.compat.v1.placeholder instead.  
+
+BiLSTM Model loaded successfully.
+2026-01-27 19:42:15 | INFO     | ensemble        | Loading Ensemble Agents...
+2026-01-27 19:42:18 | INFO     | ensemble        | Loaded ppo
+2026-01-27 19:42:18 | INFO     | ensemble        | Loaded dqn
+2026-01-27 19:42:19 | INFO     | ensemble        | Loaded qrdqn
+2026-01-27 19:42:19 | INFO     | ensemble        | Loaded recurrent
+2026-01-27 19:42:19 | ERROR    | ensemble        | Failed to load transformer: No module named 'RL_Agent_Final'
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LogisticRegression from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator LabelEncoder from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StackingClassifier from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 19:42:20 | INFO     | predictors      | Binary Outcome Model loaded.
+C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader\venv\Lib\site-packages\sklearn\base.py:463: InconsistentVersionWarning: Trying to unpickle estimator StandardScaler from version 1.7.2 when using version 1.8.0. This might lead to breaking code or invalid results. Use at your own risk. For more info please refer to:
+https://scikit-learn.org/stable/model_persistence.html#security-maintainability-limitations
+  warnings.warn(
+2026-01-27 19:42:20 | INFO     | predictors      | Binary Scaler loaded.
+2026-01-27 19:42:20 | INFO     | predictors      | Multi-class Outcome Model loaded.
+2026-01-27 19:42:20 | INFO     | predictors      | Multi Scaler loaded.
+2026-01-27 19:42:29 | INFO     | connector       | MT5 Connected. Code: (1, 'Success')
+2026-01-27 19:42:29 | INFO     | tick_buffer     | TickStream initialized starting from: 1769467769842
+2026-01-27 19:42:31 | INFO     | orbit           | Fetching M1 History for Optimization (7 Days)...
+2026-01-27 19:42:37 | INFO     | renko_optimizer | Optimization Results: BS=5.9150, Offset=4678.7596, PnL=210.0
+2026-01-27 19:42:37 | INFO     | orbit           | Replaying history to sync Renko state (Size: 5.91496)...
+2026-01-27 19:42:37 | INFO     | orbit           | Saved Warmup Renko Snapshot to: renkos\renko_2026-01-27_19-42-37.csv (61 bricks)
+2026-01-27 19:42:37 | INFO     | orbit           | Orbit Started. Brick: 5.9150
+2026-01-27 19:42:46 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5063.7149624), close=np.float64(5057.8), high=np.float64(5063.7149624), low=np.float64(5057.8), uptrend=False, timestamp=np.int64(1769467770028), sequence='00011000000001111111100000011111111001110101111100011000110000')
+2026-01-27 19:42:46 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:42:46 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5057.8), close=np.float64(5051.8850376), high=np.float64(5057.8), low=np.float64(5051.8850376), uptrend=False, timestamp=np.int64(1769467770028), sequence='000110000000011111111000000111111110011101011111000110001100000')
+2026-01-27 19:42:47 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:42:58 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5051.8850376), close=np.float64(5045.9700752), high=np.float64(5051.8850376), low=np.float64(5045.9700752), uptrend=False, timestamp=np.int64(1769468903433), sequence='0001100000000111111110000001111111100111010111110001100011000000')
+2026-01-27 19:42:58 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:00 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5045.9700752), close=np.float64(5040.0551128), high=np.float64(5045.9700752), low=np.float64(5040.0551128), uptrend=False, timestamp=np.int64(1769469080532), sequence='00011000000001111111100000011111111001110101111100011000110000000')
+2026-01-27 19:43:01 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:03 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5040.0551128), close=np.float64(5034.1401504), high=np.float64(5040.0551128), low=np.float64(5034.1401504), uptrend=False, timestamp=np.int64(1769469280381), sequence='000110000000011111111000000111111110011101011111000110001100000000')
+2026-01-27 19:43:03 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:05 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5034.1401504), close=np.float64(5028.225187999999), high=np.float64(5034.1401504), low=np.float64(5028.225187999999), uptrend=False, timestamp=np.int64(1769469381323), sequence='0001100000000111111110000001111111100111010111110001100011000000000')
+2026-01-27 19:43:05 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:06 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5022.310225599999), high=np.float64(5028.225187999999), low=np.float64(5022.310225599999), uptrend=False, timestamp=np.int64(1769469446407), sequence='00011000000001111111100000011111111001110101111100011000110000000000')       
+2026-01-27 19:43:06 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:09 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5022.310225599999), close=np.float64(5016.395263199999), high=np.float64(5022.310225599999), low=np.float64(5016.395263199999), uptrend=False, timestamp=np.int64(1769469663282), sequence='000110000000011111111000000111111110011101011111000110001100000000000')      
+2026-01-27 19:43:09 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:17 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5016.395263199999), close=np.float64(5010.480300799999), high=np.float64(5016.395263199999), low=np.float64(5010.480300799999), uptrend=False, timestamp=np.int64(1769470319130), sequence='0001100000000111111110000001111111100111010111110001100011000000000000')     
+2026-01-27 19:43:17 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:20 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5010.480300799999), close=np.float64(5004.565338399999), high=np.float64(5010.480300799999), low=np.float64(5004.565338399999), uptrend=False, timestamp=np.int64(1769470566011), sequence='00011000000001111111100000011111111001110101111100011000110000000000000')    
+2026-01-27 19:43:20 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:20 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5004.565338399999), close=np.float64(4998.650375999999), high=np.float64(5004.565338399999), low=np.float64(4998.650375999999), uptrend=False, timestamp=np.int64(1769470575348), sequence='000110000000011111111000000111111110011101011111000110001100000000000000')   
+2026-01-27 19:43:20 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:20 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(4998.650375999999), close=np.float64(4992.7354135999985), high=np.float64(4998.650375999999), low=np.float64(4992.7354135999985), uptrend=False, timestamp=np.int64(1769470575947), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000')
+2026-01-27 19:43:20 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:23 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(4998.650375999999), close=np.float64(5004.565338399999), high=np.float64(5004.565338399999), low=np.float64(4998.650375999999), uptrend=True, timestamp=np.int64(1769470810603), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001')  
+2026-01-27 19:43:23 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:24 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5004.565338399999), close=np.float64(5010.480300799999), high=np.float64(5010.480300799999), low=np.float64(5004.565338399999), uptrend=True, timestamp=np.int64(1769470834368), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011') 
+2026-01-27 19:43:24 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:26 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5010.480300799999), close=np.float64(5016.395263199999), high=np.float64(5016.395263199999), low=np.float64(5010.480300799999), uptrend=True, timestamp=np.int64(1769470938784), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111')
+2026-01-27 19:43:26 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:28 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5010.480300799999), close=np.float64(5004.565338399999), high=np.float64(5010.480300799999), low=np.float64(5004.565338399999), uptrend=False, timestamp=np.int64(1769471100009), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110')
+2026-01-27 19:43:28 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:33 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5010.480300799999), close=np.float64(5016.395263199999), high=np.float64(5016.395263199999), low=np.float64(5010.480300799999), uptrend=True, timestamp=np.int64(1769471320789), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101')
+2026-01-27 19:43:33 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:41 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5016.395263199999), close=np.float64(5022.310225599999), high=np.float64(5022.310225599999), low=np.float64(5016.395263199999), uptrend=True, timestamp=np.int64(1769475648471), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011')
+2026-01-27 19:43:41 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:42 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5022.310225599999), close=np.float64(5028.225187999999), high=np.float64(5028.225187999999), low=np.float64(5022.310225599999), uptrend=True, timestamp=np.int64(1769475699236), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111')
+2026-01-27 19:43:42 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:44 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5034.1401504), high=np.float64(5034.1401504), low=np.float64(5028.225187999999), uptrend=True, timestamp=np.int64(1769475881206), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111')     
+2026-01-27 19:43:44 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:49 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5034.1401504), close=np.float64(5040.0551128), high=np.float64(5040.0551128), low=np.float64(5034.1401504), uptrend=True, timestamp=np.int64(1769476496528), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111')
+2026-01-27 19:43:49 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:50 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5040.0551128), close=np.float64(5045.9700752), high=np.float64(5045.9700752), low=np.float64(5040.0551128), uptrend=True, timestamp=np.int64(1769476638526), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111111')
+2026-01-27 19:43:50 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:43:59 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5045.9700752), close=np.float64(5051.8850376), high=np.float64(5051.8850376), low=np.float64(5045.9700752), uptrend=True, timestamp=np.int64(1769477958310), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111111')
+2026-01-27 19:44:00 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:03 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5051.8850376), close=np.float64(5057.8), high=np.float64(5057.8), low=np.float64(5051.8850376), uptrend=True, timestamp=np.int64(1769478301790), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111111')
+2026-01-27 19:44:03 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:07 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5051.8850376), close=np.float64(5045.9700752), high=np.float64(5051.8850376), low=np.float64(5045.9700752), uptrend=False, timestamp=np.int64(1769479160953), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111111110')
+2026-01-27 19:44:07 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:08 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5045.9700752), close=np.float64(5040.0551128), high=np.float64(5045.9700752), low=np.float64(5040.0551128), uptrend=False, timestamp=np.int64(1769479215583), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111111100')        
+2026-01-27 19:44:08 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:09 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5045.9700752), close=np.float64(5051.8850376), high=np.float64(5051.8850376), low=np.float64(5045.9700752), uptrend=True, timestamp=np.int64(1769479550459), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111111001')        
+2026-01-27 19:44:09 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:16 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5045.9700752), close=np.float64(5040.0551128), high=np.float64(5045.9700752), low=np.float64(5040.0551128), uptrend=False, timestamp=np.int64(1769481486091), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111111110010')      
+2026-01-27 19:44:16 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:18 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5040.0551128), close=np.float64(5034.1401504), high=np.float64(5040.0551128), low=np.float64(5034.1401504), uptrend=False, timestamp=np.int64(1769481756371), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111111100100')     
+2026-01-27 19:44:18 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:20 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5034.1401504), close=np.float64(5028.225187999999), high=np.float64(5034.1401504), low=np.float64(5028.225187999999), uptrend=False, timestamp=np.int64(1769481964337), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111111001000')
+2026-01-27 19:44:20 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:22 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5022.310225599999), high=np.float64(5028.225187999999), low=np.float64(5022.310225599999), uptrend=False, timestamp=np.int64(1769482186275), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111111110010000')
+2026-01-27 19:44:22 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:24 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5022.310225599999), close=np.float64(5016.395263199999), high=np.float64(5022.310225599999), low=np.float64(5016.395263199999), uptrend=False, timestamp=np.int64(1769482294171), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111111100100000')
+2026-01-27 19:44:24 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:29 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5022.310225599999), close=np.float64(5028.225187999999), high=np.float64(5028.225187999999), low=np.float64(5022.310225599999), uptrend=True, timestamp=np.int64(1769482538623), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111111001000001')
+2026-01-27 19:44:29 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:31 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5034.1401504), high=np.float64(5034.1401504), low=np.float64(5028.225187999999), uptrend=True, timestamp=np.int64(1769482699741), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111111110010000011')
+2026-01-27 19:44:31 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:32 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5022.310225599999), high=np.float64(5028.225187999999), low=np.float64(5022.310225599999), uptrend=False, timestamp=np.int64(1769482803652), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111111100100000110')
+2026-01-27 19:44:32 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:33 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5034.1401504), high=np.float64(5034.1401504), low=np.float64(5028.225187999999), uptrend=True, timestamp=np.int64(1769482841670), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111111001000001101')
+2026-01-27 19:44:33 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:35 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5022.310225599999), high=np.float64(5028.225187999999), low=np.float64(5022.310225599999), uptrend=False, timestamp=np.int64(1769482898901), sequence='00011000000001111111100000011111111001110101111100011000110000000000000001110111111110010000011010')
+2026-01-27 19:44:35 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:38 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5028.225187999999), close=np.float64(5034.1401504), high=np.float64(5034.1401504), low=np.float64(5028.225187999999), uptrend=True, timestamp=np.int64(1769483087893), sequence='000110000000011111111000000111111110011101011111000110001100000000000000011101111111100100000110101')
+2026-01-27 19:44:38 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:39 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5034.1401504), close=np.float64(5040.0551128), high=np.float64(5040.0551128), low=np.float64(5034.1401504), uptrend=True, timestamp=np.int64(1769483127435), sequence='0001100000000111111110000001111111100111010111110001100011000000000000000111011111111001000001101011')
+2026-01-27 19:44:39 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:41 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5040.0551128), close=np.float64(5045.9700752), high=np.float64(5045.9700752), low=np.float64(5040.0551128), uptrend=True, timestamp=np.int64(1769483216433), sequence='0011000000001111111100000011111111001110101111100011000110000000000000001110111111110010000011010111')
+2026-01-27 19:44:41 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:43 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5045.9700752), close=np.float64(5051.8850376), high=np.float64(5051.8850376), low=np.float64(5045.9700752), uptrend=True, timestamp=np.int64(1769483405136), sequence='0110000000011111111000000111111110011101011111000110001100000000000000011101111111100100000110101111')
+2026-01-27 19:44:44 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:45 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5051.8850376), close=np.float64(5057.8), high=np.float64(5057.8), low=np.float64(5051.8850376), uptrend=True, timestamp=np.int64(1769483496146), sequence='1100000000111111110000001111111100111010111110001100011000000000000000111011111111001000001101011111')        
+2026-01-27 19:44:45 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:46 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5057.8), close=np.float64(5063.7149624), high=np.float64(5063.7149624), low=np.float64(5057.8), uptrend=True, timestamp=np.int64(1769483597164), sequence='1000000001111111100000011111111001110101111100011000110000000000000001110111111110010000011010111111')        
+2026-01-27 19:44:46 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:47 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5063.7149624), close=np.float64(5069.6299248000005), high=np.float64(5069.6299248000005), low=np.float64(5063.7149624), uptrend=True, timestamp=np.int64(1769483641340), sequence='0000000011111111000000111111110011101011111000110001100000000000000011101111111100100000110101111111')
+2026-01-27 19:44:47 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:48 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5075.544887200001), high=np.float64(5075.544887200001), low=np.float64(5069.6299248000005), uptrend=True, timestamp=np.int64(1769483717060), sequence='0000000111111110000001111111100111010111110001100011000000000000000111011111111001000001101011111111')
+2026-01-27 19:44:48 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:44:50 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5063.7149624), high=np.float64(5069.6299248000005), low=np.float64(5063.7149624), uptrend=False, timestamp=np.int64(1769483992008), sequence='0000001111111100000011111111001110101111100011000110000000000000001110111111110010000011010111111110')
+2026-01-27 19:44:50 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:01 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5063.7149624), close=np.float64(5057.8), high=np.float64(5063.7149624), low=np.float64(5057.8), uptrend=False, timestamp=np.int64(1769485218132), sequence='0000011111111000000111111110011101011111000110001100000000000000011101111111100100000110101111111100')       
+2026-01-27 19:45:01 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:14 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5057.8), close=np.float64(5051.8850376), high=np.float64(5057.8), low=np.float64(5051.8850376), uptrend=False, timestamp=np.int64(1769486552108), sequence='0000111111110000001111111100111010111110001100011000000000000000111011111111001000001101011111111000')       
+2026-01-27 19:45:14 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:16 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5057.8), close=np.float64(5063.7149624), high=np.float64(5063.7149624), low=np.float64(5057.8), uptrend=True, timestamp=np.int64(1769486839139), sequence='0001111111100000011111111001110101111100011000110000000000000001110111111110010000011010111111110001')        
+2026-01-27 19:45:16 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:19 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5063.7149624), close=np.float64(5069.6299248000005), high=np.float64(5069.6299248000005), low=np.float64(5063.7149624), uptrend=True, timestamp=np.int64(1769487334815), sequence='0011111111000000111111110011101011111000110001100000000000000011101111111100100000110101111111100011')
+2026-01-27 19:45:19 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:28 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5075.544887200001), high=np.float64(5075.544887200001), low=np.float64(5069.6299248000005), uptrend=True, timestamp=np.int64(1769488682149), sequence='0111111110000001111111100111010111110001100011000000000000000111011111111001000001101011111111000111')
+2026-01-27 19:45:28 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:38 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5063.7149624), high=np.float64(5069.6299248000005), low=np.float64(5063.7149624), uptrend=False, timestamp=np.int64(1769490363721), sequence='1111111100000011111111001110101111100011000110000000000000001110111111110010000011010111111110001110')
+2026-01-27 19:45:38 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:45:49 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5075.544887200001), high=np.float64(5075.544887200001), low=np.float64(5069.6299248000005), uptrend=True, timestamp=np.int64(1769492438074), sequence='1111111000000111111110011101011111000110001100000000000000011101111111100100000110101111111100011101')
+2026-01-27 19:45:49 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:07 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5063.7149624), high=np.float64(5069.6299248000005), low=np.float64(5063.7149624), uptrend=False, timestamp=np.int64(1769496073386), sequence='1111110000001111111100111010111110001100011000000000000000111011111111001000001101011111111000111010')
+2026-01-27 19:46:07 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:18 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5063.7149624), close=np.float64(5057.8), high=np.float64(5063.7149624), low=np.float64(5057.8), uptrend=False, timestamp=np.int64(1769497885065), sequence='1111100000011111111001110101111100011000110000000000000001110111111110010000011010111111110001110100')       
+2026-01-27 19:46:18 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:25 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5063.7149624), close=np.float64(5069.6299248000005), high=np.float64(5069.6299248000005), low=np.float64(5063.7149624), uptrend=True, timestamp=np.int64(1769499106937), sequence='1111000000111111110011101011111000110001100000000000000011101111111100100000110101111111100011101001')
+2026-01-27 19:46:25 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:31 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5069.6299248000005), close=np.float64(5075.544887200001), high=np.float64(5075.544887200001), low=np.float64(5069.6299248000005), uptrend=True, timestamp=np.int64(1769499905407), sequence='1110000001111111100111010111110001100011000000000000000111011111111001000001101011111111000111010011')
+2026-01-27 19:46:31 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:32 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5075.544887200001), close=np.float64(5081.459849600001), high=np.float64(5081.459849600001), low=np.float64(5075.544887200001), uptrend=True, timestamp=np.int64(1769500074341), sequence='1100000011111111001110101111100011000110000000000000001110111111110010000011010111111110001110100111')
+2026-01-27 19:46:32 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:44 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5081.459849600001), close=np.float64(5087.374812000001), high=np.float64(5087.374812000001), low=np.float64(5081.459849600001), uptrend=True, timestamp=np.int64(1769502298992), sequence='1000000111111110011101011111000110001100000000000000011101111111100100000110101111111100011101001111')
+2026-01-27 19:46:44 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:46:50 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5087.374812000001), close=np.float64(5093.289774400001), high=np.float64(5093.289774400001), low=np.float64(5087.374812000001), uptrend=True, timestamp=np.int64(1769503718606), sequence='0000001111111100111010111110001100011000000000000000111011111111001000001101011111111000111010011111')
+2026-01-27 19:46:50 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:08 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5093.289774400001), close=np.float64(5099.204736800001), high=np.float64(5099.204736800001), low=np.float64(5093.289774400001), uptrend=True, timestamp=np.int64(1769506738732), sequence='0000011111111001110101111100011000110000000000000001110111111110010000011010111111110001110100111111')
+2026-01-27 19:47:08 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:14 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5093.289774400001), close=np.float64(5087.374812000001), high=np.float64(5093.289774400001), low=np.float64(5087.374812000001), uptrend=False, timestamp=np.int64(1769507916102), sequence='0000111111110011101011111000110001100000000000000011101111111100100000110101111111100011101001111110')
+2026-01-27 19:47:14 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:17 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5087.374812000001), close=np.float64(5081.459849600001), high=np.float64(5087.374812000001), low=np.float64(5081.459849600001), uptrend=False, timestamp=np.int64(1769508510881), sequence='0001111111100111010111110001100011000000000000000111011111111001000001101011111111000111010011111100')
+2026-01-27 19:47:17 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:23 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5081.459849600001), close=np.float64(5075.544887200001), high=np.float64(5081.459849600001), low=np.float64(5075.544887200001), uptrend=False, timestamp=np.int64(1769509771955), sequence='0011111111001110101111100011000110000000000000001110111111110010000011010111111110001110100111111000')
+2026-01-27 19:47:23 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:37 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5081.459849600001), close=np.float64(5087.374812000001), high=np.float64(5087.374812000001), low=np.float64(5081.459849600001), uptrend=True, timestamp=np.int64(1769512988305), sequence='0111111110011101011111000110001100000000000000011101111111100100000110101111111100011101001111110001')
+2026-01-27 19:47:37 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:43 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5087.374812000001), close=np.float64(5093.289774400001), high=np.float64(5093.289774400001), low=np.float64(5087.374812000001), uptrend=True, timestamp=np.int64(1769513936222), sequence='1111111100111010111110001100011000000000000000111011111111001000001101011111111000111010011111100011')
+2026-01-27 19:47:43 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:47:50 | INFO     | orbit           | New Brick: NewBrickEvent(open=np.float64(5093.289774400001), close=np.float64(5099.204736800001), high=np.float64(5099.204736800001), low=np.float64(5093.289774400001), uptrend=True, timestamp=np.int64(1769515163464), sequence='1111111001110101111100011000110000000000000001110111111110010000011010111111110001110100111111000111')
+2026-01-27 19:47:50 | INFO     | orbit           | Ensemble Vote: -3.3519 -> Action: 0
+2026-01-27 19:48:00 | INFO     | orbit           | Orbit Stopped by User
+2026-01-27 19:48:00 | INFO     | connector       | MT5 Shutdown
+PS C:\Users\5502\OneDrive\Desktop\GOPO\Trader\Reinforcement\Trader> 
