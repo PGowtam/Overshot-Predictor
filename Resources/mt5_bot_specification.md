@@ -113,8 +113,8 @@ MAX_DAILY_DRAWDOWN_PCT = 0.03 # 3% daily loss limit → halt all trading
 MAX_CONCURRENT_TRADES = 1     # Only 1 open position at a time
 
 # ── Renko ──────────────────────────────────────────
-BRICK_SIZE_FACTOR = 0.00118   # ≈ ATR factor for XAUUSD (~$2.50 at $2100)
-                               # brick_size = current_price × BRICK_SIZE_FACTOR
+BRICK_SIZE_FACTOR = 0.0018    # Dynamic factor (brick_size = open * 0.0018)
+                               # Recalculated daily at 00:00 Broker Time
 
 # ── Feature Engine ─────────────────────────────────
 Z_SCORE_WINDOW = 1000         # Rolling z-score window size
@@ -228,6 +228,12 @@ class RenkoBuilder:
         self.uptrend = 0   # 0=neutral, 1=up, -1=down
         self.history = []
         self.sequence = ""
+
+    def update_brick_size(self, new_size: float):
+        """Update brick size for next bricks. 
+        Existing open/close prices are NOT adjusted to maintain continuity.
+        """
+        self.brick_size = new_size
 
     def update_tick(self, price: float, timestamp_ms: int) -> list[BrickEvent]:
         """Process a single price. Returns list of new bricks (0, 1, or many)."""
@@ -370,6 +376,10 @@ class LiveFeatureEngine:
         self.current_brick_id = 0
         self.prev_brick_open = 0.0
         self.prev_brick_size = 1.0
+
+    def update_brick_size(self, new_size: float):
+        """Update internal brick size reference for Progress/Flag_Zone."""
+        self.current_brick_size = new_size
 
     def on_new_brick(self, brick):
         """Called when RenkoBuilder emits a new brick. Updates context."""
@@ -977,19 +987,36 @@ class OrbitEngine:
 
 ---
 
-## 6. Startup Warmup Protocol
+## 6. Startup & Warmup Protocol
 
-### 6.1 Why Warmup is Necessary
-The z-score rolling windows need at least 1000 ticks before they produce meaningful values. The micro-buffer needs 100+ ticks. The macro-history needs 10 bricks. Without warmup, the first ~10 bricks would have garbage feature values.
+### 6.1 Priority 1: State Restoration (Persistence)
+At startup, the bot first checks for `logs/state.json`. If found and valid:
+1. Load `RollingZScore` stats (mean, M2, count) for all 5 features.
+2. Load `InferenceBuffer` micro-deque (last 100 ticks).
+3. Load `InferenceBuffer` macro-history (last 10 bricks).
+4. Load `RenkoBuilder` state (current_price, uptrend).
+5. Fetch only the few missing ticks from `last_time_msc` to `now`.
+6. **Status**: Transition to `READY` immediately.
 
-### 6.2 Warmup Steps
-1. Fetch the last 5,000–10,000 ticks from MT5 using `copy_ticks_from`.
-2. Replay them through the FeatureEngine (fills z-score deques).
-3. Replay them through the RenkoBuilder (establishes current Renko state).
-4. For each brick that forms during replay, run `buffer.on_brick_close()` to fill the snapshot history.
-5. After warmup, the system is in a steady state and inference is valid.
+### 6.2 Priority 2: Adaptive Progressive History
+If no state file exists, use the **Tiered Discovery** strategy:
+1. **Tier 1**: Request 24h of ticks via `mt5.copy_ticks_range`.
+2. **Tier 2 (Fallback)**: If Tier 1 < 10,000 ticks, try 12h.
+3. **Tier 3 (Fallback)**: If still < 10,000 ticks, try 6h -> 2h.
+4. **Tier 4 (Final Resort)**: Request exactly 10,000 ticks.
 
-### 6.3 Daily Reset
+**Integrity Check**:
+- If `len(ticks) >= 5000` AND `bricks_formed >= 10`: Replay history and transition to `READY`.
+- Else: Transition to `LIVE_WARMUP`.
+
+### 6.3 Priority 3: Live Warmup (Soak Mode)
+If all history requests fail to meet the Integrity Check:
+1. Enter `LIVE_WARMUP` status.
+2. Ingest every live tick into `FeatureEngine` and `RenkoBuilder`.
+3. **DO NOT** run inference or place trades.
+4. Once `total_ticks >= 5000` AND `bricks >= 10`, transition to `READY`.
+
+### 6.4 Daily Reset
 At midnight UTC (or broker rollover):
 1. Reset daily PnL counter.
 2. Re-optimize brick size from last 7 days of M1 data (optional).
@@ -1094,3 +1121,43 @@ pandas>=2.0.0
 4. **Position sizing**: Kelly criterion based on ensemble confidence (vote count + Pred_OS magnitude).
 5. **Trailing stop**: Post-entry management using Head B's predicted overshoot distance.
 6. **Hardware acceleration**: ONNX runtime instead of TensorFlow for faster inference.
+---
+
+### 4.11 Daily Synchronizer (`execution/sync.py`)
+
+**Responsibility**: Recalculate `brick_size` at the start of every trading day (00:00 Broker Time).
+
+```python
+import time
+from datetime import datetime
+import MetaTrader5 as mt5
+
+class DailySynchronizer:
+    def __init__(self, symbol, factor, renko_builder, feature_engine):
+        self.symbol = symbol
+        self.factor = factor
+        self.renko = renko_builder
+        self.engine = feature_engine
+        self.last_sync_day = datetime.now().day
+
+    def check_sync(self):
+        """Call this in the main loop every 1 minute."""
+        now = datetime.now()
+        if now.day != self.last_sync_day:
+            print(f"[SYNC] Day rollover detected ({now.date()}).")
+            
+            # Fetch Daily Open
+            rates = mt5.copy_rates_from_pos(self.symbol, mt5.TIMEFRAME_D1, 0, 1)
+            if rates is not None and len(rates) > 0:
+                open_price = rates[0]['open']
+                new_size = open_price * self.factor
+                
+                # Update components
+                self.renko.update_brick_size(new_size)
+                self.engine.update_brick_size(new_size)
+                
+                print(f"[SYNC] Dynamic Brick Update: Open={open_price}, New Size={new_size:.4f}")
+                self.last_sync_day = now.day
+            else:
+                print("[WARNING] Could not fetch daily open from MT5.")
+```

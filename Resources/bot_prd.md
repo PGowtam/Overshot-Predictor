@@ -69,7 +69,7 @@ All models share `Prob_Win_threshold: 0.50`, `z_score_window: 1000`, `micro_buff
 
 **FR-RENKO-01**: Build Renko bricks using the **bid price** from each tick. This matches the training pipeline's convention.
 
-**FR-RENKO-02**: Brick size is computed at session start: `brick_size = current_ask × BRICK_SIZE_FACTOR` where `BRICK_SIZE_FACTOR = 0.00118`. For XAUUSD at $2100, this yields ≈ $2.50.
+**FR-RENKO-02**: Brick size is calculated at the start of every trading day (00:00 Broker Time) using the first available H1/D1 open price: `brick_size = open_price × 0.0018`. For XAUUSD at $2400, this yields ≈ $4.32.
 
 **FR-RENKO-03**: Reversals require **2× brick_size** movement. The `while` loop must handle gap fills (multiple bricks from a single tick if price jumps).
 
@@ -193,12 +193,14 @@ All models share `Prob_Win_threshold: 0.50`, `z_score_window: 1000`, `micro_buff
 |---|---|
 | NF-01 | Feature parity: live feature values must be identical to training pipeline given identical tick input |
 | NF-02 | Volume Robustness: the bot must switch to 'Mitigation Mode' automatically if broker lack tick volume |
-| NF-03 | Warmup latency < 30 seconds for 10,000 ticks |
-| NF-04 | Inference latency < 500ms per brick close (3 model forward passes) |
-| NF-05 | Zero unhandled exceptions — all MT5 API calls wrapped in try/except with logging |
-| NF-06 | State persistence guarantees no more than 1 missed trade after crash/restart |
-| NF-07 | Log rotation: max 10MB per file, 5 backup files |
-| NF-08 | Bot must run unattended on a Windows VPS for 24/5 (Mon–Fri market hours) |
+| NF-03 | Adaptive Startup: the bot must fetch up to 24h of history to satisfy the 10-brick / 5000-tick requirement; fall back to Live Soak if history is insufficient |
+| NF-04 | Session Persistence: all feature engine and buffer state must persist to disk to skip warmup on restarts |
+| NF-05 | Warmup latency < 30 seconds for 10,000 ticks |
+| NF-06 | Inference latency < 500ms per brick close (3 model forward passes) |
+| NF-07 | Zero unhandled exceptions — all MT5 API calls wrapped in try/except with logging |
+| NF-08 | State persistence guarantees no more than 1 missed trade after crash/restart |
+| NF-09 | Log rotation: max 10MB per file, 5 backup files |
+| NF-10 | Bot must run unattended on a Windows VPS for 24/5 (Mon–Fri market hours) |
 
 ---
 

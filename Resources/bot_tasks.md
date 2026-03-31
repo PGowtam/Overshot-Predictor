@@ -273,3 +273,38 @@
 - [ ] If Week 2 stable: increase to 0.05 lots, run 1 week
 - [ ] Never increase by more than 2× per week
 - [ ] If WR drops > 15% below expectation at any point: halt, investigate, fix
+
+---
+
+## Phase 11: Daily Synchronization
+
+### 11.1 Implementation
+- [ ] Create `DailySynchronizer` in `execution/sync.py`
+- [ ] Logic: Time-based daily rollover detection
+- [ ] Logic: MT5 `D1` Open fetching
+- [ ] Logic: Factor = 0.0018 applied to Open
+- [ ] Propagation: call `RenkoBuilder.update_brick_size`
+- [ ] Propagation: call `FeatureEngine.update_brick_size`
+
+### 11.2 Verification
+- [ ] **Test: `tests/test_daily_sync.py`**
+- [ ] Mock Day Rollover: Ensure `brick_size` updates correctly
+- [ ] Sequence Persistence: Verify bricks before/after rollover stay valid
+- [ ] **Gate: Phase 11 Verification Passed**
+
+---
+
+## Phase 12: Adaptive Tiered Startup & Persistence
+
+### 12.1 Implementation
+- [ ] Logic: Adaptive Tiered Discovery loop (`24h -> 12h -> 6h -> 2h -> 10k`)
+- [ ] Logic: Warmup Integrity Gate (`5000 ticks` & `10 bricks`)
+- [ ] Logic: State Persistence (Serialization for deques/numpy) in `StateManager`
+- [ ] UI: Logging for startup status (`REPLAY`, `WARMUP`, `READY`)
+
+### 12.2 Verification
+- [ ] **Test: `tests/test_startup.py`**
+- [ ] Test: Persistence restoration parity (Identical Z-scores after load)
+- [ ] Test: Cold Start trigger (0 history -> lock in `WARMUP`)
+- [ ] Test: Warmup exit (Thresholds met -> unlock to `READY`)
+- [ ] **Gate: Phase 12 Verification Passed**

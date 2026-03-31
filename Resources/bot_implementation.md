@@ -532,3 +532,56 @@ These rules must NEVER be violated. Any violation indicates a bug that must be f
 | 8 | Model called with `training=False` | Code review: `model(..., training=False)` |
 | 9 | No trades during warmup | Assert order count == 0 after warmup |
 | 10 | State persisted after every state change | Assert `state.save()` called in every `state.update()` |
+
+---
+
+## Phase 11: Daily Synchronization
+
+### Objective
+Implement the logic to recalculate `brick_size` at the 00:00 Broker Time rollover.
+
+### File: `execution/sync.py`
+- Create `DailySynchronizer` class.
+- Logic:
+  - Cache current `day`.
+  - On every heartbeat (1-min), check if `current_day != cached_day`.
+  - Fetch `D1` OHLC from MT5.
+  - Compute `new_size = Daily_Open * 0.0018`.
+  - Update `RenkoBuilder` and `FeatureEngine`.
+
+### Verification (Phase 11 Gate)
+**Test: `tests/test_daily_sync.py`**
+1. **Mock MT5 Call**: Use `unittest.mock` to return a predefined daily open (e.g., 2000.0).
+2. **Rollover Trigger**: Manually change the system clock or force `check_sync()` with a different day in the test harness.
+3. **Propagation**: Assert `renko.brick_size` is now `3.60` (2000 * 0.0018).
+4. **Continuity**: Verify that historical bricks already in the Renko history retain their original `brick_size` field, while new ticks use the updated value.
+
+---
+
+## Phase 12: Adaptive Tiered Startup & Persistence
+
+### Objective
+Implement a robust startup sequence that prioritizes data integrity over speed, while using persistence to bypass warmup on repeats.
+
+### Logic Flow (`main.py`)
+1. **Persistence Check**: Try `state.load()`. If successful, skip to Step 4.
+2. **Tiered Discovery**: 
+   - Loop through durations: `[24, 12, 6, 2]` hours.
+   - Use `mt5.copy_ticks_range` for each.
+   - Final fallback: `mt5.copy_ticks_from(..., count=10000)`.
+3. **Integrity Gate**:
+   - Replay all fetched ticks through `FeatureEngine` and `RenkoBuilder`.
+   - If `ticks < 5000` OR `bricks < 10`: Set `status = WARMUP`.
+   - Else: Set `status = READY`.
+4. **Live Execution**:
+   - If `WARMUP`: Process live ticks but suppress order execution until Gate is met.
+   - If `READY`: Begin full operation.
+
+### Verification (Phase 12 Gate)
+**Test: `tests/test_startup.py`**
+1. **Cold Start (No History)**: Mock MT5 to return 0 ticks. Verify bot enters `WARMUP`.
+2. **History Replay**: Mock MT5 to return 6000 ticks and 15 bricks. Verify bot enters `READY` immediately.
+3. **Persistence**: 
+   - Run warmup. Save state.
+   - Shutdown bot. Restart bot.
+   - Verify bot reads `state.json` and is `READY` in < 1 second.

@@ -3,8 +3,9 @@ from pathlib import Path
 
 # ── Symbol & Market ────────────────────────────────
 SYMBOL = "XAUUSD"
-BRICK_SIZE = 1.0        # Renko bricks (pts/pips)
-SPREAD_LIMIT = 0.5      # Max spread allowed for execution
+BRICK_SIZE_FACTOR = 0.0018 # Dynamic factor (size = factor * open)
+BRICK_SIZE = 4.3           # Default/Initial (will be overwritten by sync)
+SPREAD_LIMIT = 0.5         # Max spread allowed for execution
 
 # ── Risk Management ────────────────────────────────
 LOT_SIZE = 1.0           # Static lot size for now
