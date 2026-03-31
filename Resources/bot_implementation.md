@@ -224,6 +224,10 @@ Implement the full 9D feature vector computation for live ticks, verified to pro
 - `on_new_brick(brick)` updates `current_brick_open`, `current_brick_size`, `prev_brick_open`, `prev_brick_size`, `current_brick_id`
 - OFI weak inequalities: `dBid >= 0` and `dBid <= 0` (NOT strict `>` and `<`)
 - Susceptibility: divide RAW OFI/Depth, then z-score. NEVER divide two z-scores.
+- **Volume Fallback (FR-FE-08)**: If any tick volume is missing (`bid_vol == 0 or ask_vol == 0`), implement the **Price-Action Proxy** for `z_OFI`:
+  - `raw_ofi = 1.0` if `mid > prev_mid`, `-1.0` if `mid < prev_mid`, else `0.0`.
+  - `depth_raw = 0.0`, `susc_raw = 0.0`.
+- Verify that Z-scores handle the constant `0.0` for depth/susc gracefully.
 - All 5 z-score trackers are independent `RollingZScore` instances.
 
 ### Verification (Phase 3 Gate)
@@ -246,7 +250,9 @@ Implement the full 9D feature vector computation for live ticks, verified to pro
 
 4. **Susceptibility safety test**: Feed tick where `depth_raw = 0`. Verify no division by zero (1e-8 guard).
 
-5. **First tick test**: Assert first call returns `[0.0] * 9`.
+5. **Volume Fallback Test**: Inject ticks with `bid_vol = 0`. Verify `raw_ofi` equals the sign of the price change and `z_depth/z_susc` become `0.0`.
+
+6. **First tick test**: Assert first call returns `[0.0] * 9`.
 
 ---
 

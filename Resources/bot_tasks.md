@@ -86,6 +86,7 @@
 ### 3.1 Implementation
 - [ ] Create `LiveFeatureEngine` class in `data/feature_engine.py`
 - [ ] 5 independent `RollingZScore` instances (OFI, Depth, Susc, Vel, Spread)
+- [ ] Implementation: Volume Mitigation Fallback (`sign(diff(mid))` proxy)
 - [ ] Previous tick state tracking (bid, ask, bid_vol, ask_vol, time_ms)
 - [ ] OFI with weak inequalities (`>=`, `<=`)
 - [ ] Susceptibility: raw division first (`ofi / (depth + 1e-8)`), then z-score
@@ -95,11 +96,14 @@
 - [ ] First tick returns `[0.0] * 9`
 
 ### 3.2 Verification
-- [ ] **Parity test**: Feed 500 saved ticks through `compute_vector`, compare to reference vectors (max error < 1e-6 for z-scored features)
+- [ ] **Parity test**: Feed 500 saved ticks through `compute_vector`, compare to reference vectors (max error < 1e-6)
 - [ ] **OFI formula**: Manually compute for 5 known tick pairs, verify match
 - [ ] **Susceptibility safety**: Feed tick with `depth_raw = 0` → no crash, no NaN
+- [ ] **Volume Fallback Test**: Inject ticks with `bid_vol = 0`, verify `raw_ofi` equals `sign(price_change)`
+- [ ] **Z-Score Sustainability**: Feed 1000 zero-volume ticks, verify `z_depth/z_susc` stay `0.0`
 - [ ] **First tick**: Assert returns `[0.0] * 9`
-- [ ] **Brick transition**: Verify `on_new_brick` correctly updates progress/flag_zone context
+- [ ] **Brick transition**: Verify `on_new_brick` context update
+- [ ] **Gate: Phase 3 Verification Passed**
 
 ---
 

@@ -93,11 +93,13 @@ All models share `Prob_Win_threshold: 0.50`, `z_score_window: 1000`, `micro_buff
 | 7 | `Flag_Zone` | 1 if |mid − prev_brick_open| ≥ prev_brick_size |
 | 8 | `Decay` | 0 (current brick ticks) |
 
-**FR-FEAT-02**: OFI uses **weak inequalities** (`>=` and `<=`):
-```
-e_k = I(dBid>=0)*q_bid_k − I(dBid<=0)*q_bid_{k-1}
-    − I(dAsk<=0)*q_ask_k + I(dAsk>=0)*q_ask_{k-1}
-```
+**FR-FEAT-02**: OFI Calculation & Volume Fallback (FR-FE-08):
+- **Normal Mode**: Compute standard volume-weighted OFI if `bid_vol > 0` AND `ask_vol > 0`.
+- **Mitigation Mode**: If any L1 volumes are missing (0.0), default to the **Tick Direction Proxy**:
+  - `z_OFI = sign(mid_k - mid_{k-1})`
+  - `z_Depth = 0.0`
+  - `z_Susc = 0.0`
+- **Justification**: Ablation testing (`ablation_report.json`) confirms that this price-proxy approach maintains **88.25% WR**, outperforming the volume-based baseline in the absence of L2 depth.
 
 **FR-FEAT-03**: Susceptibility is computed as `raw_OFI / (raw_Depth + 1e-8)` FIRST, THEN z-scored. Never divide two z-scores.
 
@@ -190,12 +192,13 @@ e_k = I(dBid>=0)*q_bid_k − I(dBid<=0)*q_bid_{k-1}
 | ID | Requirement |
 |---|---|
 | NF-01 | Feature parity: live feature values must be identical to training pipeline given identical tick input |
-| NF-02 | Warmup latency < 30 seconds for 10,000 ticks |
-| NF-03 | Inference latency < 500ms per brick close (3 model forward passes) |
-| NF-04 | Zero unhandled exceptions — all MT5 API calls wrapped in try/except with logging |
-| NF-05 | State persistence guarantees no more than 1 missed trade after crash/restart |
-| NF-06 | Log rotation: max 10MB per file, 5 backup files |
-| NF-07 | Bot must run unattended on a Windows VPS for 24/5 (Mon–Fri market hours) |
+| NF-02 | Volume Robustness: the bot must switch to 'Mitigation Mode' automatically if broker lack tick volume |
+| NF-03 | Warmup latency < 30 seconds for 10,000 ticks |
+| NF-04 | Inference latency < 500ms per brick close (3 model forward passes) |
+| NF-05 | Zero unhandled exceptions — all MT5 API calls wrapped in try/except with logging |
+| NF-06 | State persistence guarantees no more than 1 missed trade after crash/restart |
+| NF-07 | Log rotation: max 10MB per file, 5 backup files |
+| NF-08 | Bot must run unattended on a Windows VPS for 24/5 (Mon–Fri market hours) |
 
 ---
 
