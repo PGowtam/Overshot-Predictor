@@ -1,0 +1,156 @@
+{
+  "n_high": 710,
+  "n_low": 3031,
+  "features": {
+    "z_OFI": {
+      "high_mean": 0.0873,
+      "low_mean": -0.0903,
+      "delta": 0.1776,
+      "ks": 0.1701,
+      "ks_p": 0.0
+    },
+    "z_Depth": {
+      "high_mean": 0.2186,
+      "low_mean": 0.0991,
+      "delta": 0.1195,
+      "ks": 0.0722,
+      "ks_p": 0.00467506
+    },
+    "z_Susc": {
+      "high_mean": 0.0658,
+      "low_mean": -0.0831,
+      "delta": 0.1489,
+      "ks": 0.1725,
+      "ks_p": 0.0
+    },
+    "z_Vel": {
+      "high_mean": 0.2808,
+      "low_mean": 0.2046,
+      "delta": 0.0762,
+      "ks": 0.0806,
+      "ks_p": 0.00106148
+    },
+    "z_Spread": {
+      "high_mean": 0.5961,
+      "low_mean": -0.1064,
+      "delta": 0.7025,
+      "ks": 0.1296,
+      "ks_p": 1e-08
+    },
+    "Progress": {
+      "high_mean": 0.2558,
+      "low_mean": -0.0926,
+      "delta": 0.3484,
+      "ks": 0.2209,
+      "ks_p": 0.0
+    },
+    "Flag_Curr": {
+      "high_mean": 0.982,
+      "low_mean": 0.9932,
+      "delta": -0.0113,
+      "ks": 0.0168,
+      "ks_p": 0.99600376
+    },
+    "Flag_Zone": {
+      "high_mean": 0.7887,
+      "low_mean": 0.7796,
+      "delta": 0.0092,
+      "ks": 0.0738,
+      "ks_p": 0.00354522
+    },
+    "Decay": {
+      "high_mean": 0.0002,
+      "low_mean": 0.0001,
+      "delta": 0.0001,
+      "ks": 0.0168,
+      "ks_p": 0.99600376
+    }
+  },
+  "gradient_attribution": {
+    "Decay": {
+      "mean_abs_grad": 0.00077219,
+      "rank": 1
+    },
+    "z_Vel": {
+      "mean_abs_grad": 0.00074375,
+      "rank": 2
+    },
+    "Progress": {
+      "mean_abs_grad": 0.000735,
+      "rank": 3
+    },
+    "Flag_Zone": {
+      "mean_abs_grad": 0.00068048,
+      "rank": 4
+    },
+    "z_Susc": {
+      "mean_abs_grad": 0.00064299,
+      "rank": 5
+    },
+    "z_Depth": {
+      "mean_abs_grad": 0.00063348,
+      "rank": 6
+    },
+    "Flag_Curr": {
+      "mean_abs_grad": 0.00063095,
+      "rank": 7
+    },
+    "z_OFI": {
+      "mean_abs_grad": 0.000613,
+      "rank": 8
+    },
+    "z_Spread": {
+      "mean_abs_grad": 0.00059643,
+      "rank": 9
+    }
+  },
+  "occlusion_importance": {
+    "z_OFI": -0.052069,
+    "z_Depth": -0.001713,
+    "z_Susc": -0.034292,
+    "z_Vel": 0.008164,
+    "z_Spread": -0.047649,
+    "Progress": 0.240806,
+    "Flag_Curr": 0.087223,
+    "Flag_Zone": 0.004437,
+    "Decay": -4.9e-05
+  },
+  "win_vs_loss_features": {
+    "z_OFI": {
+      "win_mean": 0.0867,
+      "loss_mean": 0.0967
+    },
+    "z_Depth": {
+      "win_mean": 0.2192,
+      "loss_mean": 0.2092
+    },
+    "z_Susc": {
+      "win_mean": 0.0641,
+      "loss_mean": 0.0902
+    },
+    "z_Vel": {
+      "win_mean": 0.2689,
+      "loss_mean": 0.4527
+    },
+    "z_Spread": {
+      "win_mean": 0.4908,
+      "loss_mean": 2.1168
+    },
+    "Progress": {
+      "win_mean": 0.2437,
+      "loss_mean": 0.4309
+    },
+    "Flag_Curr": {
+      "win_mean": 0.984,
+      "loss_mean": 0.9522
+    },
+    "Flag_Zone": {
+      "win_mean": 0.7857,
+      "loss_mean": 0.8326
+    },
+    "Decay": {
+      "win_mean": 0.0002,
+      "loss_mean": 0.0005
+    }
+  }
+}

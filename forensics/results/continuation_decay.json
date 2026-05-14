@@ -1,0 +1,64 @@
+{
+  "t+0": {
+    "n": 114,
+    "win_rate": 0.359649,
+    "ci_lo": 0.277456,
+    "ci_hi": 0.450993,
+    "median_latency_ms": 0.0
+  },
+  "t+1": {
+    "n": 110,
+    "win_rate": 0.327273,
+    "ci_lo": 0.24671,
+    "ci_hi": 0.419493,
+    "median_latency_ms": 53.0
+  },
+  "t+2": {
+    "n": 107,
+    "win_rate": 0.364486,
+    "ci_lo": 0.27946,
+    "ci_hi": 0.458906,
+    "median_latency_ms": 153.0
+  },
+  "t+3": {
+    "n": 107,
+    "win_rate": 0.345794,
+    "ci_lo": 0.262431,
+    "ci_hi": 0.439846,
+    "median_latency_ms": 206.0
+  },
+  "t+5": {
+    "n": 90,
+    "win_rate": 0.277778,
+    "ci_lo": 0.195796,
+    "ci_hi": 0.377954,
+    "median_latency_ms": 358.0
+  },
+  "t+10": {
+    "n": 81,
+    "win_rate": 0.246914,
+    "ci_lo": 0.165902,
+    "ci_hi": 0.350845,
+    "median_latency_ms": 684.0
+  },
+  "t+15": {
+    "n": 74,
+    "win_rate": 0.216216,
+    "ci_lo": 0.137703,
+    "ci_hi": 0.322739,
+    "median_latency_ms": 988.0
+  },
+  "t+20": {
+    "n": 63,
+    "win_rate": 0.222222,
+    "ci_lo": 0.137249,
+    "ci_hi": 0.339125,
+    "median_latency_ms": 1342.0
+  },
+  "spread_stats": {
+    "mean": 0.418179,
+    "median": 0.387,
+    "p95": 0.551,
+    "mean_pct_of_brick": 14.7793
+  }
+}

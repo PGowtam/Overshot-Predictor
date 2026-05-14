@@ -1,0 +1,74 @@
+{
+  "Research (W=1000,warm=30)|lat=0ms": {
+    "signals": 180,
+    "trades": 127,
+    "wr": 0.456693,
+    "avg_slippage": 0.553039,
+    "avg_spread": 0.41352,
+    "config": "Research (W=1000,warm=30)",
+    "latency_ms": 0
+  },
+  "Research (W=1000,warm=30)|lat=50ms": {
+    "signals": 180,
+    "trades": 127,
+    "wr": 0.456693,
+    "avg_slippage": 0.557165,
+    "avg_spread": 0.41489,
+    "config": "Research (W=1000,warm=30)",
+    "latency_ms": 50
+  },
+  "Research (W=1000,warm=30)|lat=100ms": {
+    "signals": 180,
+    "trades": 125,
+    "wr": 0.472,
+    "avg_slippage": 0.542347,
+    "avg_spread": 0.418568,
+    "config": "Research (W=1000,warm=30)",
+    "latency_ms": 100
+  },
+  "Research (W=1000,warm=30)|lat=200ms": {
+    "signals": 180,
+    "trades": 126,
+    "wr": 0.47619,
+    "avg_slippage": 0.618492,
+    "avg_spread": 0.429079,
+    "config": "Research (W=1000,warm=30)",
+    "latency_ms": 200
+  },
+  "Trader (W=5000,warm=10000)|lat=0ms": {
+    "signals": 172,
+    "trades": 119,
+    "wr": 0.445378,
+    "avg_slippage": 0.519848,
+    "avg_spread": 0.39358,
+    "config": "Trader (W=5000,warm=10000)",
+    "latency_ms": 0
+  },
+  "Trader (W=5000,warm=10000)|lat=50ms": {
+    "signals": 172,
+    "trades": 119,
+    "wr": 0.445378,
+    "avg_slippage": 0.524251,
+    "avg_spread": 0.395042,
+    "config": "Trader (W=5000,warm=10000)",
+    "latency_ms": 50
+  },
+  "Trader (W=5000,warm=10000)|lat=100ms": {
+    "signals": 172,
+    "trades": 118,
+    "wr": 0.457627,
+    "avg_slippage": 0.505223,
+    "avg_spread": 0.414246,
+    "config": "Trader (W=5000,warm=10000)",
+    "latency_ms": 100
+  },
+  "Trader (W=5000,warm=10000)|lat=200ms": {
+    "signals": 172,
+    "trades": 119,
+    "wr": 0.462185,
+    "avg_slippage": 0.58007,
+    "avg_spread": 0.417176,
+    "config": "Trader (W=5000,warm=10000)",
+    "latency_ms": 200
+  }
+}

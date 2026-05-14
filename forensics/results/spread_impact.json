@@ -1,0 +1,33 @@
+{
+  "mid_mid": {
+    "long_wr": 0.68,
+    "long_n": 125,
+    "short_wr": 0.666667,
+    "short_n": 168,
+    "overall_wr": 0.672355,
+    "directional_delta": 0.013333
+  },
+  "exec_mid": {
+    "long_wr": 0.578125,
+    "long_n": 128,
+    "short_wr": 0.505682,
+    "short_n": 176,
+    "overall_wr": 0.536184,
+    "directional_delta": 0.072443
+  },
+  "exec_exec": {
+    "long_wr": 0.425532,
+    "long_n": 141,
+    "short_wr": 0.338889,
+    "short_n": 180,
+    "overall_wr": 0.376947,
+    "directional_delta": 0.086643
+  },
+  "spread_stats": {
+    "mean_abs": 0.418179,
+    "mean_pct_brick": 14.7793,
+    "p95_pct_brick": 19.4071,
+    "round_trip_cost": 0.836359,
+    "margin_retention_pct": 70.53
+  }
+}
