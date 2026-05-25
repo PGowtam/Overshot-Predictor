@@ -155,8 +155,9 @@ class TickReceiver:
                     'bid_vol': float(parts[4]),
                     'ask_vol': float(parts[5])
                 }
-                self.history_ticks.append(htick)
-                self.htick_count += 1
+                with self._lock:
+                    self.history_ticks.append(htick)
+                    self.htick_count += 1
 
             elif msg_type == 'HDONE':
                 count = int(parts[1])
@@ -197,3 +198,14 @@ class TickReceiver:
         Useful for unit tests without needing a real socket connection.
         """
         self._dispatch(line.strip())
+
+    def get_history_ticks(self):
+        """Thread-safe snapshot copy of history ticks."""
+        with self._lock:
+            return list(self.history_ticks)
+
+    def set_history_ticks(self, ticks):
+        """Thread-safe setter for history ticks."""
+        with self._lock:
+            self.history_ticks = list(ticks)
+            self.htick_count = len(ticks)

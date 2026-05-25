@@ -23,7 +23,7 @@
 //--- Input parameters
 input int    InpTickPort       = 9000;     // Tick channel port (EA → Python)
 input int    InpCmdPort        = 9001;     // Command channel port (Python → EA)
-input int    InpHistoryTicks   = 5000;     // Number of history ticks to send on startup
+input int    InpHistoryDays    = 7;        // Calendar days of tick history for path optimization
 input int    InpConnectRetries = 10;       // Max connection retry attempts
 input int    InpConnectWaitMs  = 2000;     // Wait between retries (ms)
 input int    InpTimerMs        = 100;      // Command poll interval (ms)
@@ -55,7 +55,7 @@ int OnInit()
    Print("═══════════════════════════════════════════════════");
    Print("  TickSender EA v3.00 — Production Socket Bridge");
    Print("  Tick Port: ", InpTickPort, " | Cmd Port: ", InpCmdPort);
-   Print("  History:   ", InpHistoryTicks, " ticks");
+   Print("  History:   ", InpHistoryDays, " day lookback");
    Print("═══════════════════════════════════════════════════");
 
    // ─── Step 1: Connect to Python tick receiver (port 9000) ─────
@@ -108,7 +108,7 @@ int OnInit()
    last_day_open_date = TimeToString(TimeCurrent(), TIME_DATE);
 
    // ─── Step 3: Send history batch ─────────────────────────────
-   int history_sent = SendHistory(InpHistoryTicks);
+   int history_sent = SendHistory(InpHistoryDays);
    Print("✓ Sent history: ", history_sent, " ticks + HDONE");
 
    // ─── Step 4: Connect to Python command receiver (port 9001) ──
@@ -507,22 +507,42 @@ void ProcessCommand(string line)
 
 
 //+------------------------------------------------------------------+
-//| Send history ticks for warmup                                    |
+//| Send history ticks for warmup (date-range based)                  |
+//| Uses CopyTicksRange to get ALL ticks in a date range, ensuring    |
+//| multi-day coverage for PathOptimizer regardless of tick frequency. |
 //+------------------------------------------------------------------+
-int SendHistory(int count)
+int SendHistory(int lookback_days)
 {
    MqlTick ticks[];
-   int copied = CopyTicks(_Symbol, ticks, COPY_TICKS_ALL, 0, count);
+   
+   // Calculate "from" timestamp: current time minus lookback_days
+   datetime now = TimeCurrent();
+   datetime from_time = now - (lookback_days * 86400);  // 86400 seconds per day
+   
+   // CopyTicksRange gets ALL ticks between from_time and now
+   // This works correctly for multi-day history unlike CopyTicks(count)
+   // which on XAUUSD only gets ~1 day with 250K ticks
+   int copied = CopyTicksRange(_Symbol, ticks, COPY_TICKS_ALL, 
+                               (ulong)from_time * 1000,   // Convert to ms
+                               (ulong)now * 1000 + 60000); // +1min buffer
 
    if(copied <= 0)
    {
-      Print("WARNING: CopyTicks returned ", copied, " ticks");
-      // Send HDONE with 0 count
-      SendTickMsg(StringFormat("HDONE|%d", 0));
-      return 0;
+      Print("WARNING: CopyTicksRange returned ", copied, " ticks ",
+            "(from ", TimeToString(from_time), " to ", TimeToString(now), ")");
+      // Fallback: try CopyTicks with large count
+      copied = CopyTicks(_Symbol, ticks, COPY_TICKS_ALL, 0, 2000000);
+      if(copied <= 0)
+      {
+         Print("WARNING: CopyTicks fallback also returned ", copied, " ticks");
+         SendTickMsg(StringFormat("HDONE|%d", 0));
+         return 0;
+      }
+      Print("Using CopyTicks fallback: ", copied, " ticks");
    }
 
-   Print("Sending ", copied, " history ticks...");
+   Print("Sending ", copied, " history ticks (from ",
+         TimeToString(from_time), " to ", TimeToString(now), ")...");
 
    int sent = 0;
    for(int i = 0; i < copied; i++)
@@ -534,13 +554,17 @@ int SendHistory(int count)
       if(SendTickMsg(msg))
          sent++;
 
-      // Yield every 500 ticks to prevent socket buffer overflow
-      if(i > 0 && i % 500 == 0)
-         Sleep(10);
+      // Yield every 5000 ticks to prevent socket buffer overflow
+      if(i > 0 && i % 5000 == 0)
+         Sleep(5);
    }
+
+   // Allow socket buffer to flush before sending termination marker
+   Sleep(100);
 
    // Send HDONE marker
    SendTickMsg(StringFormat("HDONE|%d", sent));
+   Print("History send complete: ", sent, " / ", copied, " ticks sent.");
    return sent;
 }
 
@@ -591,18 +615,22 @@ bool SendTickMsg(string msg)
          if(l2 > 0) l2--;
          SocketSend(tick_socket, d2, l2);
 
-         // Re-send history — but ONLY if not already inside a reconnect
-         // (prevents SendHistory → SendTickMsg → reconnect → SendHistory cascade)
-         if(!reconnecting)
+         // Re-send history — but ONLY if cmd_connected is false (meaning Python restarted/not warmed up)
+         // and we are not already inside a reconnect loop.
+         if(reconnecting)
          {
-            reconnecting = true;
-            int hist_sent = SendHistory(InpHistoryTicks);
-            reconnecting = false;
-            Print("✓ Reconnect: re-sent DAYOPEN + ", hist_sent, " history ticks + HDONE");
+            Print("  (skipping history replay — already inside reconnect)");
+         }
+         else if(cmd_connected)
+         {
+            Print("✓ Reconnect: skipped history replay (Python bridge is already warmed up and active)");
          }
          else
          {
-            Print("  (skipping history replay — already inside reconnect)");
+            reconnecting = true;
+            int hist_sent = SendHistory(InpHistoryDays);
+            reconnecting = false;
+            Print("✓ Reconnect: re-sent DAYOPEN + ", hist_sent, " history ticks + HDONE");
          }
 
          // Also mark cmd as disconnected so it reconnects via OnTimer

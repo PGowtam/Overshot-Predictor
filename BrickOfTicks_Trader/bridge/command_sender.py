@@ -56,30 +56,35 @@ class CommandSender:
         self._confirms = confirm_queue
         self._connected = False
 
-    def connect(self, timeout=30):
+    def connect(self, timeout=None):
         """
-        Start TCP server on port 9001 and wait for EA to connect.
-
-        The EA connects as a client to this port during its OnInit().
-        This method blocks until the EA connects or timeout expires.
+        Start TCP server on port 9001 and accept connection in a background thread.
+        This allows the server to open immediately on startup so the EA can connect
+        instantly during OnInit(), eliminating startup race conditions.
         """
         self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # CRITICAL: bind to 127.0.0.1 ONLY — never 0.0.0.0
         self._server.bind(('127.0.0.1', self._port))
         self._server.listen(1)
-        self._server.settimeout(timeout)
-        logger.info(f"CommandSender listening on 127.0.0.1:{self._port} — waiting for EA...")
+        logger.info(f"CommandSender listening on 127.0.0.1:{self._port} — waiting for EA asynchronously...")
 
+        t = threading.Thread(target=self._accept_connection, args=(timeout,), daemon=True)
+        t.start()
+
+    def _accept_connection(self, timeout):
+        if timeout:
+            self._server.settimeout(timeout)
         try:
             self._conn, addr = self._server.accept()
             self._connected = True
             logger.info(f"CommandSender: EA connected from {addr}")
         except socket.timeout:
             self._connected = False
-            logger.error(f"CommandSender: No EA connection within {timeout}s")
-            raise ConnectionRefusedError(
-                f"No EA connection on port {self._port} within {timeout}s")
+            logger.error(f"CommandSender: No EA connection within timeout")
+        except Exception as e:
+            self._connected = False
+            logger.error(f"CommandSender accept loop error: {e}")
 
     def disconnect(self):
         """Gracefully close the command connection and server."""
