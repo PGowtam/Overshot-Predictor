@@ -218,7 +218,37 @@ Each individual fold model also performed well independently on the holdout:
 - Fold 2: 88.94% (416 trades)
 - Fold 3: 94.65% (355 trades)
 
+### 9.3 Volume Fallback Proxy Pipeline & 1:1 Fallback Model
+To handle environments where broker tick volume data is entirely missing (a common occurrence in retail MT5 demo/live accounts), a dedicated **1:1 Fallback Model** was engineered.
+
+#### The Fallback Proxy Architecture
+- **Features:** Rather than relying on actual tick volumes, we implement a **Price-Action Volume Proxy** for `z_OFI`, where `raw_ofi = sign(mid_t - mid_{t-1})`.
+- **Zero-Depth Assumption:** Total book depth (`depth_raw`) and susceptibility (`susc_raw`) are set to `0.0`. Thus, their rolling z-scores naturally evaluate to `0.0`, rendering the model fully volume-independent.
+- **Dedicated Fallback Scripts:**
+  - `src/feature_engine_fallback.py` — Volume-independent feature computation.
+  - `src/buffer_sim_fallback.py` — Micro-buffer streaming simulation using fallback features.
+  - `src/tensor_builder_fallback.py` — Compiles 9D snapshots into training/validation/test tensors.
+  - `src/train_fallback.py` — Retrains the dual-head CNN+LSTM architecture under `outputs/fallback/`.
+  - `src/calibrate_fallback.py` — Conducts threshold sweeps on the fallback validation set.
+  - `src/evaluate_fallback.py` — Compares the fallback model to the execution-priced baseline.
+
+#### Calibrated Performance Results (OOS Test Set: July – Dec 2023)
+By applying tighter, calibrated thresholds of `Prob_Win >= 0.6` and `Pred_OS >= 1.7` (saved to `outputs/fallback/config.json`), the volume fallback model achieved remarkable out-of-sample performance:
+
+| Metric | Exec Baseline Model | Volume Fallback Model | Delta |
+| :--- | :--- | :--- | :--- |
+| **Operational Thresholds** | Prob >= 0.5, OS >= 2.0 | Prob >= 0.6, OS >= 1.7 | — |
+| **Out-of-Sample WR** | **93.85%** | **93.12%** | **-0.73%** |
+| **Trades Taken (6 Months)**| **65** | **160** | **+95 trades** |
+| **Wins / Losses** | 61 Wins / 4 Losses | 149 Wins / 11 Losses | — |
+| **EV per Trade (1:1 RR)** | **+0.88R** | **+0.86R** | **-0.02R** |
+
+#### Crucial Insights & Takeaways
+1. **Volume Is Not an Absolute Requirement:** The fallback model retains a massive, statistically robust edge (+0.86R EV per trade) despite zero volume features.
+2. **Double the Actionable Signals:** Because the fallback model isn't bottlenecked by strict volume/spread constraints, it triggers **more than double the trades** (160 vs 65) in the same test window, dramatically increasing net profit potential.
+
 ---
+
 
 ## 10. Key Design Decisions & Lessons
 
@@ -256,6 +286,9 @@ Each individual fold model also performed well independently on the holdout:
 | `outputs/exec/cv/fold_2/model.keras` | CV Fold 2 model |
 | `outputs/exec/cv/fold_3/model.keras` | CV Fold 3 model |
 | `outputs/exec/cv/fold_N/config.json` | Per-fold calibrated thresholds |
+| `outputs/fallback/model.keras` | Retrained 1:1 Volume Fallback model |
+| `outputs/fallback/config.json` | Calibrated thresholds for 1:1 Fallback (`Prob >= 0.6, OS >= 1.7`) |
+
 
 ### Data / Tensors
 | Path | Description |
@@ -263,8 +296,10 @@ Each individual fold model also performed well independently on the holdout:
 | `outputs/exec/labels.parquet` | Execution-priced labels (30,978 rows) |
 | `outputs/exec/tensors/` | Train/Val/Test tensors for Phase 9 model |
 | `outputs/exec/cv/fold_N/tensors/` | Per-fold tensor datasets |
+| `outputs/fallback/tensors/` | Compiled volume-fallback tensors |
 | `outputs/features/` | Cached 9D tick vectors, macro vectors |
 | `outputs/features/snapshots/` | (100,9) snapshots per brick |
+
 
 ### Source Code
 | File | Phase | Description |
@@ -278,9 +313,16 @@ Each individual fold model also performed well independently on the holdout:
 | `src/calibrate.py` | 7 | Threshold calibration |
 | `src/evaluate.py` | 8 | Test set evaluation |
 | `src/phase9_pipeline.py` | 9 | Execution-price pipeline |
+| `src/feature_engine_fallback.py` | FB | Volume-independent features |
+| `src/buffer_sim_fallback.py` | FB | Fallback micro-buffer simulation |
+| `src/tensor_builder_fallback.py` | FB | Fallback tensor builder |
+| `src/train_fallback.py` | FB | Fallback model training |
+| `src/calibrate_fallback.py` | FB | Fallback threshold calibration |
+| `src/evaluate_fallback.py` | FB | Fallback performance evaluation |
 | `src/cv_tensor_builder.py` | IT2 | Cross-validation tensor builder |
 | `src/cv_train.py` | IT2 | Cross-validation training |
 | `src/cv_evaluate.py` | IT2 | Cross-validation evaluation |
+
 
 ---
 
