@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 LABELS_DIR = BASE_DIR / "outputs" / "sim_labels"
 TENSOR_DIR = LABELS_DIR / "tensors"
 
-OUTPUT_DIR = BASE_DIR / "outputs" / "exec_tensors"
+OUTPUT_DIR = BASE_DIR / "outputs" / "exec_tensors_regime"
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ def build_split(split_name: str, df: pd.DataFrame, undersample: bool = False):
     
     # Pre-allocate massive arrays
     X_micro = np.zeros((n_samples, 10, 100, 9), dtype=np.float32)
-    X_macro = np.zeros((n_samples, 10, 3), dtype=np.float32)
+    X_macro = np.zeros((n_samples, 10, 7), dtype=np.float32)
     X_seq = np.zeros((n_samples, 100), dtype=np.float32)
     
     y_class = np.zeros((n_samples, 1), dtype=np.float32)
@@ -111,12 +111,21 @@ def build_split(split_name: str, df: pd.DataFrame, undersample: bool = False):
         try:
             # Load
             micro = np.load(micro_path)
-            macro = np.load(macro_path)
+            orig_macro = np.load(macro_path)
+            
+            # Enrich macro with regime features
+            enriched_macro = np.zeros(7, dtype=np.float32)
+            enriched_macro[0:3] = orig_macro
+            enriched_macro[3] = row.hour_sin
+            enriched_macro[4] = row.hour_cos
+            enriched_macro[5] = row.brick_in_run_log
+            enriched_macro[6] = row.local_wr
+            
             with open(seq_path, 'r') as f:
                 seq_str = f.read().strip()
                 
             micro_q.append(micro)
-            macro_q.append(macro)
+            macro_q.append(enriched_macro)
             
             if len(micro_q) == 10:
                 # Assign
@@ -184,6 +193,37 @@ def main():
     train_mask = df['utc_time'] <= TRAIN_END
     val_mask = (df['utc_time'] > TRAIN_END) & (df['utc_time'] <= VAL_END)
     test_mask = df['utc_time'] > VAL_END
+    
+    # --- Compute Regime Features ---
+    logger.info("Computing Regime Features...")
+    
+    # 1 & 2: Cyclic hour
+    hour = df['utc_time'].dt.hour.values
+    df['hour_sin'] = np.sin(2 * np.pi * hour / 24).astype(np.float32)
+    df['hour_cos'] = np.cos(2 * np.pi * hour / 24).astype(np.float32)
+    
+    # 3: Brick in run (log scaled)
+    direction = df['direction'].values
+    N = len(df)
+    brick_in_run = np.ones(N, dtype=np.float32)
+    for i in range(1, N):
+        if direction[i] == direction[i-1]:
+            brick_in_run[i] = brick_in_run[i-1] + 1
+    df['brick_in_run_log'] = np.log1p(brick_in_run).astype(np.float32)
+    
+    # 4: Rolling local win rate
+    y = df['y_class'].values.astype(np.float32)
+    local_wr = np.full(N, 0.3533, dtype=np.float32)
+    for i in range(20, N):
+        # We must ignore NaNs when calculating the rolling mean. 
+        # y_class has NaNs when the forward outcome logic was excluded.
+        window = y[i-20:i]
+        valid_window = window[~np.isnan(window)]
+        if len(valid_window) > 0:
+            local_wr[i] = np.mean(valid_window)
+    df['local_wr'] = local_wr
+    
+    logger.info("Regime Features computed.")
     
     df_train = df[train_mask]
     df_val = df[val_mask]

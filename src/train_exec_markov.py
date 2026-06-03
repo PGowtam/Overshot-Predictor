@@ -3,13 +3,14 @@ Train Execution Markov Model
 ============================
 Trains Model B: The experimental Markov Chain sequence architecture.
 Outputs to: outputs/exec_markov/
+
+Uses the same training pattern as train.py (raw numpy arrays, no DataGenerator).
 """
 
 import sys
 import time
 from pathlib import Path
 import numpy as np
-import pandas as pd
 import tensorflow as tf
 from tensorflow.keras.callbacks import (
     EarlyStopping, ReduceLROnPlateau, ModelCheckpoint, CSVLogger, Callback
@@ -99,7 +100,7 @@ def main():
         OverfittingMonitor()
     ]
     
-    print(f"\n🚀 Starting training (max epochs={MAX_EPOCHS})...")
+    print(f"\n🚀 Starting training (max epochs={MAX_EPOCHS}, batch={BATCH_SIZE})...")
     history = model.fit(
         x=[data["train"]["micro"], data["train"]["macro"], data["train"]["seq"]],
         y=[data["train"]["y_class"], data["train"]["y_mag"]],

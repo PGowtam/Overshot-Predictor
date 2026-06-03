@@ -118,7 +118,27 @@ class LiveFeatureEngine:
             if sigma >= 1e-12:
                 z_size = (brick_event.brick_size - mu) / sigma
                 
-        self.last_macro = [log_dur, direction, float(z_size)]
+        # Regime features
+        import datetime
+        dt = datetime.datetime.utcfromtimestamp(brick_event.timestamp / 1000.0)
+        hour = dt.hour
+        hour_sin = math.sin(2 * math.pi * hour / 24)
+        hour_cos = math.cos(2 * math.pi * hour / 24)
+        
+        if not hasattr(self, 'last_direction'):
+            self.last_direction = None
+            self.current_run_len = 0
+            
+        if self.last_direction == direction:
+            self.current_run_len += 1
+        else:
+            self.current_run_len = 1
+        self.last_direction = direction
+        
+        brick_in_run_log = math.log1p(self.current_run_len)
+        local_wr = 0.3533  # Hardcoded prior for live engine to prevent lookahead bias
+                
+        self.last_macro = [log_dur, direction, float(z_size), float(hour_sin), float(hour_cos), float(brick_in_run_log), local_wr]
 
     def compute_vector(self, bid: float, ask: float, bid_vol: float, ask_vol: float, time_ms: int) -> list:
         """

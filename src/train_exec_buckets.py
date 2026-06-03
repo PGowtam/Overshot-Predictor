@@ -19,9 +19,12 @@ from tensorflow.keras.callbacks import (
 # Setup Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR / "src"))
-from models_exec import build_baseline_exec_model, compile_model
+from tensorflow.keras.losses import BinaryFocalCrossentropy, CategoricalCrossentropy
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.utils import to_categorical
+from models_exec import build_bucketized_exec_model
 
-OUTPUT_DIR = BASE_DIR / "outputs" / "exec_baseline"
+OUTPUT_DIR = BASE_DIR / "outputs" / "exec_buckets"
 TENSOR_DIR = BASE_DIR / "outputs" / "exec_tensors"
 
 MODEL_PATH = OUTPUT_DIR / "model.keras"
@@ -46,11 +49,12 @@ def generate_markdown_report(history):
     train_loss = history.history['loss']
     best_epoch = np.argmin(val_loss) + 1
     
-    report = f"""# Execution Baseline Model (Model A) - Training Report
+    report = f"""# Bucketized Execution Model - Training Report
 
 ## Configuration
-- **Model**: Dual-Head CNN+LSTM (Micro + Macro)
-- **Data Source**: Execution Labels (Sim-Labeler)
+- **Model**: Dual-Head CNN+LSTM (Classification Heads)
+- **Losses**: BinaryFocalCrossentropy (prob_win), CategoricalCrossentropy (pred_os_class)
+- **Data Source**: Imbalanced Prior + Bucketized Target
 - **Batch Size**: {BATCH_SIZE}
 - **Epochs Ran**: {len(val_loss)}
 - **Best Epoch**: {best_epoch}
@@ -59,7 +63,7 @@ def generate_markdown_report(history):
 - **Best Validation Loss**: `{np.min(val_loss):.4f}`
 - **Final Train Loss**: `{train_loss[-1]:.4f}`
 
-*(Model saved to outputs/exec_baseline/model.keras)*
+*(Model saved to outputs/exec_buckets/model.keras)*
 """
     with open(REPORT_PATH, 'w') as f:
         f.write(report)
@@ -68,15 +72,22 @@ def generate_markdown_report(history):
 def load_tensors():
     print("📂 Loading execution tensors...")
     data = {}
+    
+    bins = [0.5, 1.0, 2.0]
+    print(f"Applying Target Bucketization with bins: {bins}")
+    
     for split in ["train", "val"]:
         micro = np.load(TENSOR_DIR / f"{split}_micro.npy")
         macro = np.load(TENSOR_DIR / f"{split}_macro.npy")
         y_class = np.load(TENSOR_DIR / f"{split}_y_class.npy")
         y_mag = np.load(TENSOR_DIR / f"{split}_y_mag.npy")
         
+        y_os_idx = np.digitize(y_mag.flatten(), bins)
+        y_os_class = to_categorical(y_os_idx, num_classes=4)
+        
         data[split] = {
             "micro": micro, "macro": macro,
-            "y_class": y_class, "y_mag": y_mag
+            "y_class": y_class, "y_os_class": y_os_class
         }
         print(f"  {split}: {len(y_class):,} samples")
     return data
@@ -87,34 +98,55 @@ def main():
     
     data = load_tensors()
     
-    print("\n🏗️  Building Baseline Execution Model...")
-    model = build_baseline_exec_model()
-    model = compile_model(model)
+    print("\n🏗️  Building Bucketized Execution Model...")
+    model = build_bucketized_exec_model()
+    
+    model.compile(
+        optimizer=Adam(learning_rate=1e-3),
+        loss={
+            'prob_win': BinaryFocalCrossentropy(gamma=2.0),
+            'pred_os_class': CategoricalCrossentropy()
+        },
+        loss_weights={
+            'prob_win': 1.0,
+            'pred_os_class': 0.3
+        },
+        metrics={
+            'prob_win': 'accuracy',
+            'pred_os_class': 'accuracy'
+        }
+    )
     
     callbacks = [
         EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True, verbose=1),
-        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1, min_lr=1e-6),
+        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, min_lr=1e-6, verbose=1),
         ModelCheckpoint(filepath=str(MODEL_PATH), monitor='val_loss', save_best_only=True, verbose=1),
         CSVLogger(str(LOG_PATH)),
         OverfittingMonitor()
     ]
     
-    print(f"\n🚀 Starting training (max epochs={MAX_EPOCHS}, batch={BATCH_SIZE})...")
+    print("\n🚀 Training model...")
+    # Keras does not support class_weight for multi-output models, must use sample_weight
+    w_train = np.where(data["train"]["y_class"] == 1, 0.6467 / 0.3533, 1.0)
+    w_val = np.ones_like(data["val"]["y_class"])
+    
     history = model.fit(
         x=[data["train"]["micro"], data["train"]["macro"]],
-        y=[data["train"]["y_class"], data["train"]["y_mag"]],
+        y=[data["train"]["y_class"], data["train"]["y_os_class"]],
         validation_data=(
             [data["val"]["micro"], data["val"]["macro"]],
-            [data["val"]["y_class"], data["val"]["y_mag"]]
+            [data["val"]["y_class"], data["val"]["y_os_class"]],
+            [w_val, np.ones_like(data["val"]["y_class"])]
         ),
-        epochs=MAX_EPOCHS,
         batch_size=BATCH_SIZE,
+        epochs=MAX_EPOCHS,
         callbacks=callbacks,
+        sample_weight=[w_train, np.ones_like(w_train)],
         verbose=1
     )
     
-    generate_markdown_report(history)
     print(f"\n✅ Training complete! Report saved to {REPORT_PATH}")
+    generate_markdown_report(history)
 
 
 if __name__ == "__main__":

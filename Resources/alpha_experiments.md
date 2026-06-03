@@ -607,29 +607,85 @@ If average winner increases from +1.0R to +1.3R while maintaining 93% WR, net EV
 
 ---
 
+## EXP-00A · Imbalanced Focal Loss Training (Replaces Undersampling)
+
+**Category:** Loss Engineering · Class Imbalance
+**Tags:** `▲ Calibration` `Highest Priority`
+
+### The Hypothesis
+Majority Class Undersampling destroys the model's calibration to the true market prior (35% win rate). A model trained on 50/50 data will predict mathematically invalid real-world probabilities. Instead of altering the dataset, we must alter the penalty using **Focal Loss**. Focal Loss dynamically scales down the loss based on prediction confidence, preventing the overwhelming majority class (failed breakouts) from dominating the gradients without destroying the true prior.
+
+### The Mechanic
+1. Restore the original imbalanced training set (35/65).
+2. Replace `BinaryCrossentropy` with Focal Loss: $\text{FL}(p_t) = -\alpha_t (1 - p_t)^\gamma \log(p_t)$.
+3. Set $\gamma = 2.0$ to force the model to focus on hard-to-classify winning breakouts.
+4. Train the model and evaluate. Max probability output of 0.45 is acceptable—it means the model is perfectly calibrated and indicating the best setup has a 45% chance of success.
+
+---
+
+## EXP-00B · Target Discretization (y_mag Bucketization)
+
+**Category:** Target Engineering · Regression Fix
+**Tags:** `▲ Calibration` `Highest Priority`
+
+### The Hypothesis
+Financial time-series data is characterized by fat tails and extreme noise. The continuous target (`y_mag`) is highly right-skewed. Using Huber loss on this data forces the network to simply predict the median of the distribution to minimize errors (flatlining at ~0.79). Discretizing the target into bins converts the noisy regression problem into a stable classification problem, allowing the model to look for broader momentum regime signatures.
+
+### The Mechanic
+1. Convert `y_mag` into categorical bins:
+   - Bin 0: < 0.5 R (Immediate failure)
+   - Bin 1: 0.5 R to 1.0 R (Struggle)
+   - Bin 2: 1.0 R to 2.0 R (Standard Win)
+   - Bin 3: > 2.0 R (Runner)
+2. Replace the `Pred_OS` regression head with a `Dense(4, activation='softmax')` multi-class classification head.
+3. Use `CategoricalCrossentropy` loss.
+
+---
+
+## EXP-00C · Temporal Attention / Causal TCN (Replaces CNN+LSTM)
+
+**Category:** Architecture · Temporal Resolution
+**Tags:** `▲ Win Rate` `Highest Priority`
+
+### The Hypothesis
+The current CNN + MaxPool on micro-tick data destroys valuable temporal information. MaxPool is translation-invariant (it blurs exactly *when* an event occurred). Furthermore, LSTMs struggle with long, noisy sequences (100 ticks) because their hidden state gets diluted. We need an architecture that preserves exact temporal resolution and causality.
+
+### The Mechanic
+1. **Attention Mechanism:** Replace the LSTM with a Transformer/Attention layer that can explicitly "pay attention" to the exact moment a high-spread, high-velocity order flow imbalance occurred without losing its sequence position.
+2. **Causal TCN:** Replace the CNN+MaxPool block with a Temporal Convolutional Network (TCN) using causal, dilated convolutions (no pooling). This preserves the exact temporal hierarchy while expanding the receptive field.
+
+---
+
 # VI. MASTER PRIORITIZATION MATRIX
 
 | Priority | ID | Experiment | Effort | WR Impact | EV / Freq Impact | Category |
 | :---: | :---: | :--- | :---: | :---: | :---: | :---: |
-| **1** | EXP-11 | Confidence Calibration | 🟢 1/5 | 0% | +10–20% freq | Calibration |
-| **2** | EXP-12 | Spread Microstructure Veto | 🟢 2/5 | +1–4% | Minor freq loss | Gating |
-| **3** | EXP-08 | Sequence Entropy | 🟢 1/5 | +1–3% | Neutral | Feature |
-| **4** | EXP-13 | Volatility-Regime Gating | 🟢 2/5 | +1–2% | +20–40% in low-vol | Gating |
-| **5** | EXP-17 | Adaptive TP via Pred_OS | 🟡 2/5 | 0% | **+20–50% EV** | Risk-Reward |
-| **6** | EXP-16 | Markov Chain Sequences | 🟡 2/5 | +1–3% | +5–15% targeted | Signal |
-| **7** | EXP-07 | Cross-Brick OFI Persistence | 🟡 2/5 | +1–3% | +5–10% freq | Feature |
-| **8** | EXP-14 | Baiting Inversion (Dual-Lobe) | 🟡 2/5 | − | **+4–6× freq** | Signal |
-| **9** | EXP-01 | Multi-Resolution Confluence | 🟡 3/5 | +2–4% | −30–50% freq | Architecture |
-| **10** | EXP-05 | Ensemble Orthogonality | 🟡 4/5 | +1–3% | Neutral | Architecture |
-| **11** | EXP-04 | Survival Analysis (Head C) | 🟡 3/5 | +1–3% | Risk-adjusted | Architecture |
-| **12** | EXP-02 | Early-Exit Inference | 🔴 4/5 | +1% | Structural EV | Architecture |
-| **13** | EXP-06 | OFI Autocorrelation Decay | 🔴 4/5 | +2–5% | Novel dimension | Feature |
-| **14** | EXP-09 | Hawkes Process Intensity | 🔴 4/5 | +2–5% | Novel dimension | Feature |
-| **15** | EXP-10 | Velocity Wavelet Fingerprint | 🔴 4/5 | +2–4% | Neutral | Feature |
-| **16** | EXP-15 | Trap Network (Adversarial) | 🔴 4/5 | +2–5% | Highly selective | Signal |
-| **17** | EXP-03 | Mixture of Experts (MoE) | 🔴 5/5 | +1–3% | +30–60% freq | Architecture |
+| **1** | EXP-00A | Imbalanced Focal Loss Training | 🟢 1/5 | Calibration | True Prior Restored | Loss Eng. |
+| **2** | EXP-00B | Target Discretization (Buckets) | 🟢 2/5 | Calibration | Unlocks Pred_OS | Target Eng. |
+| **3** | EXP-00C | Temporal Attention / TCN | 🔴 5/5 | High | Structural | Architecture |
+| **4** | EXP-11 | Confidence Calibration | 🟢 1/5 | 0% | +10–20% freq | Calibration |
+| **5** | EXP-12 | Spread Microstructure Veto | 🟢 2/5 | +1–4% | Minor freq loss | Gating |
+| **6** | EXP-08 | Sequence Entropy | 🟢 1/5 | +1–3% | Neutral | Feature |
+| **7** | EXP-13 | Volatility-Regime Gating | 🟢 2/5 | +1–2% | +20–40% in low-vol | Gating |
+| **8** | EXP-17 | Adaptive TP via Pred_OS | 🟡 2/5 | 0% | **+20–50% EV** | Risk-Reward |
+| **9** | EXP-16 | Markov Chain Sequences | 🟡 2/5 | +1–3% | +5–15% targeted | Signal |
+| **10** | EXP-07 | Cross-Brick OFI Persistence | 🟡 2/5 | +1–3% | +5–10% freq | Feature |
+| **11** | EXP-14 | Baiting Inversion (Dual-Lobe) | 🟡 2/5 | − | **+4–6× freq** | Signal |
+| **12** | EXP-01 | Multi-Resolution Confluence | 🟡 3/5 | +2–4% | −30–50% freq | Architecture |
+| **13** | EXP-05 | Ensemble Orthogonality | 🟡 4/5 | +1–3% | Neutral | Architecture |
+| **14** | EXP-04 | Survival Analysis (Head C) | 🟡 3/5 | +1–3% | Risk-adjusted | Architecture |
+| **15** | EXP-02 | Early-Exit Inference | 🔴 4/5 | +1% | Structural EV | Architecture |
+| **16** | EXP-06 | OFI Autocorrelation Decay | 🔴 4/5 | +2–5% | Novel dimension | Feature |
+| **17** | EXP-09 | Hawkes Process Intensity | 🔴 4/5 | +2–5% | Novel dimension | Feature |
+| **18** | EXP-10 | Velocity Wavelet Fingerprint | 🔴 4/5 | +2–4% | Neutral | Feature |
+| **19** | EXP-15 | Trap Network (Adversarial) | 🔴 4/5 | +2–5% | Highly selective | Signal |
+| **20** | EXP-03 | Mixture of Experts (MoE) | 🔴 5/5 | +1–3% | +30–60% freq | Architecture |
 
 ### Recommended Execution Phases
+
+**Phase 0 — Core Fixes (Immediate):**
+`EXP-00A` → `EXP-00B` → `EXP-00C`
+Address the fundamental calibration and structural bottlenecks identified by ML expert review.
 
 **Phase A — Quick Wins (Week 1):**
 `EXP-11` → `EXP-12` → `EXP-08` → `EXP-13`

@@ -1,15 +1,8 @@
 """
-2026 Live Engine Simulation — Tick Replay Simulator
-====================================================
-Replays historical 2026 ticks through the exact production BridgeEngine
-pipeline to validate the model's real-world execution performance.
-
-Uses REAL production components (RenkoBuilder, LiveFeatureEngine,
-InferenceBuffer, PathOptimizer, FallbackPredictor) — only the network
-layer (sockets) is replaced by in-memory replay classes.
-
-Usage:
-    python src/sim_live_engine_2026.py [--ticks data/xauusd_ticks_2026.parquet]
+2026 Live Engine Simulation — Baseline (Multiprocessing)
+========================================================
+Replays historical 2026 ticks through the exact production BridgeEngine pipeline.
+Uses 8-core multiprocessing to evaluate the model ~10x faster.
 """
 
 import os
@@ -19,23 +12,18 @@ import json
 import time
 import logging
 import argparse
+import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from datetime import datetime, timezone
-
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+import calendar
 
 # ── Path Setup ─────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
 TRADER_DIR = BASE_DIR / "BrickOfTicks_Trader"
-
-# Add the Trader directory to sys.path so we can import bridge modules
 sys.path.insert(0, str(TRADER_DIR))
 
-# Patch K_MULTIPLIER BEFORE importing bridge modules (matches main_fallback.py)
 import bridge.renko
 import bridge.path_optimizer
 bridge.renko.K_MULTIPLIER = 0.00118
@@ -46,8 +34,6 @@ from bridge.feature_engine import LiveFeatureEngine
 from bridge.buffer import InferenceBuffer
 from bridge.path_optimizer import PathOptimizer
 
-import tensorflow as tf
-
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────
@@ -57,68 +43,7 @@ CONFIG_PATH = EXEC_DIR / "config.json"
 OUTPUT_DIR = BASE_DIR / "outputs" / "experiments" / "sim_2026_exec_baseline"
 
 
-# ══════════════════════════════════════════════════════════════════
-#  Simulation-Only Classes (replace socket infrastructure)
-# ══════════════════════════════════════════════════════════════════
-
-class TickReplayProvider:
-    """Reads a parquet of ticks and provides day-boundary-aware iteration."""
-    
-    def __init__(self, parquet_path: str):
-        logger.info(f"Loading tick data from {parquet_path}...")
-        self.df = pd.read_parquet(parquet_path)
-        self.df = self.df.sort_values('time_msc').reset_index(drop=True)
-        
-        # Detect day boundaries (UTC)
-        self.df['utc_day'] = pd.to_datetime(self.df['time_msc'], unit='ms', utc=True).dt.date
-        self.days = sorted(self.df['utc_day'].unique())
-        
-        logger.info(f"Loaded {len(self.df):,} ticks across {len(self.days)} trading days")
-        logger.info(f"Date range: {self.days[0]} → {self.days[-1]}")
-        logger.info(f"Price range: {self.df['bid'].min():.2f} → {self.df['bid'].max():.2f}")
-    
-    def get_day_ticks(self, day) -> list:
-        """Return list of tick dicts for a specific day."""
-        mask = self.df['utc_day'] == day
-        day_df = self.df[mask]
-        return [
-            {
-                'time_msc': int(row['time_msc']),
-                'bid': float(row['bid']),
-                'ask': float(row['ask']),
-                'bid_vol': float(row.get('bid_vol', 0.0)),
-                'ask_vol': float(row.get('ask_vol', 0.0))
-            }
-            for _, row in day_df.iterrows()
-        ]
-    
-    def get_lookback_ticks(self, target_day, lookback_days=7) -> list:
-        """Return ticks from the N calendar days BEFORE target_day."""
-        target_idx = self.days.index(target_day)
-        # Grab from max(0, target_idx - lookback_days) to target_idx (exclusive)
-        start_idx = max(0, target_idx - lookback_days)
-        lookback_days_list = self.days[start_idx:target_idx]
-        
-        if not lookback_days_list:
-            return []
-        
-        mask = self.df['utc_day'].isin(lookback_days_list)
-        lb_df = self.df[mask]
-        return [
-            {
-                'time_msc': int(row['time_msc']),
-                'bid': float(row['bid']),
-                'ask': float(row['ask']),
-                'bid_vol': float(row.get('bid_vol', 0.0)),
-                'ask_vol': float(row.get('ask_vol', 0.0))
-            }
-            for _, row in lb_df.iterrows()
-        ]
-
-
 class SimulatedBroker:
-    """Replaces CommandSender + MT5 execution. Pure 1:1 SL/TP. No break-even."""
-    
     def __init__(self):
         self.active_position = None
         self.trade_log = []
@@ -126,10 +51,8 @@ class SimulatedBroker:
         self.daily_pnl = 0.0
     
     def execute(self, direction, price, sl, tp, brick_size, timestamp):
-        """Instant fill at price."""
         if self.active_position is not None:
-            return None  # Position already open
-        
+            return None
         self.active_position = {
             "ticket": self.next_ticket,
             "direction": direction,
@@ -140,59 +63,25 @@ class SimulatedBroker:
             "entry_time": timestamp
         }
         self.next_ticket += 1
-        logger.debug(f"  📈 OPENED: ticket={self.active_position['ticket']} "
-                     f"dir={'BUY' if direction==1 else 'SELL'} "
-                     f"entry={price:.2f} SL={sl:.2f} TP={tp:.2f}")
         return {"status": "OK", "ticket": self.active_position["ticket"]}
     
     def check_tick(self, tick):
-        """Check if active position hits SL or TP. No break-even."""
         pos = self.active_position
-        if pos is None:
-            return None
+        if pos is None: return None
         
-        if pos["direction"] == 1:  # BUY
-            if tick["bid"] <= pos["sl"]:
-                return self._close("LOSS", pos["sl"], tick["time_msc"])
-            if tick["bid"] >= pos["tp"]:
-                return self._close("WIN", pos["tp"], tick["time_msc"])
-        elif pos["direction"] == -1:  # SELL
-            if tick["ask"] >= pos["sl"]:
-                return self._close("LOSS", pos["sl"], tick["time_msc"])
-            if tick["ask"] <= pos["tp"]:
-                return self._close("WIN", pos["tp"], tick["time_msc"])
-        
+        if pos["direction"] == 1:
+            if tick["bid"] <= pos["sl"]: return self._close("LOSS", pos["sl"], tick["time_msc"])
+            if tick["bid"] >= pos["tp"]: return self._close("WIN", pos["tp"], tick["time_msc"])
+        elif pos["direction"] == -1:
+            if tick["ask"] >= pos["sl"]: return self._close("LOSS", pos["sl"], tick["time_msc"])
+            if tick["ask"] <= pos["tp"]: return self._close("WIN", pos["tp"], tick["time_msc"])
         return None
     
     def force_close(self, tick):
-        """Force close at end of simulation or day."""
         pos = self.active_position
-        if pos is None:
-            return None
-        
+        if pos is None: return None
         close_price = tick["bid"] if pos["direction"] == 1 else tick["ask"]
-        pnl = (close_price - pos["entry"]) * pos["direction"]
-        pnl_r = pnl / pos["brick_size"]
-        
-        outcome = "FORCE_CLOSE"
-        record = {
-            "ticket": pos["ticket"],
-            "direction": pos["direction"],
-            "entry": pos["entry"],
-            "sl": pos["sl"],
-            "tp": pos["tp"],
-            "brick_size": pos["brick_size"],
-            "outcome": outcome,
-            "close_price": close_price,
-            "pnl_pts": pnl,
-            "pnl_r": pnl_r,
-            "entry_time": pos["entry_time"],
-            "exit_time": tick["time_msc"]
-        }
-        self.trade_log.append(record)
-        self.daily_pnl += pnl
-        self.active_position = None
-        return record
+        return self._close("FORCE_CLOSE", close_price, tick["time_msc"])
     
     def _close(self, outcome, close_price, exit_time):
         pos = self.active_position
@@ -216,10 +105,6 @@ class SimulatedBroker:
         self.trade_log.append(record)
         self.daily_pnl += pnl
         self.active_position = None
-        
-        emoji = "✅" if outcome == "WIN" else "❌"
-        logger.info(f"  {emoji} CLOSED: ticket={record['ticket']} "
-                    f"outcome={outcome} pnl={pnl_r:+.2f}R")
         return record
     
     def reset_daily(self):
@@ -230,308 +115,202 @@ class SimulatedBroker:
         return self.active_position is not None
 
 
-class ExecPredictor:
-    """Loads the exec model and applies calibrated thresholds."""
+def process_month(year, month, parquet_path):
+    """Worker process: Disable Metal GPU to prevent deadlocks, load model, run simulation."""
+    import os
+    os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+    import tensorflow as tf
+    tf.config.set_visible_devices([], 'GPU')
     
-    def __init__(self):
-        self.model = None
-        self.prob_win_threshold = 0.5
-        self.pred_os_threshold = 2.0
+    print(f"[{year}-{month:02d}] Worker started.")
     
-    def load(self):
-        logger.info(f"Loading exec model from {MODEL_PATH}...")
-        self.model = tf.keras.models.load_model(str(MODEL_PATH), compile=False)
-        
-        # Load config thresholds if they exist
-        if CONFIG_PATH.exists():
-            with open(CONFIG_PATH, "r") as f:
-                config = json.load(f)
-                self.prob_win_threshold = config.get('Prob_Win_threshold', 0.5)
-                self.pred_os_threshold = config.get('Pred_OS_threshold', 2.0)
-                logger.info(f"Config file thresholds loaded: PW>={self.prob_win_threshold}, OS>={self.pred_os_threshold}")
-        else:
-            self.prob_win_threshold = 0.5
-            self.pred_os_threshold = 2.0
-        
-        logger.info(f"Using exact exec thresholds: PW>={self.prob_win_threshold}, OS>={self.pred_os_threshold}")
-        logger.info("Model loaded successfully.")
+    target_start = pd.Timestamp(year, month, 1, tz="UTC")
+    _, last_day = calendar.monthrange(year, month)
+    target_end = pd.Timestamp(year, month, last_day, 23, 59, 59, tz="UTC")
     
-    def predict(self, micro_tensor, macro_tensor):
-        """Run inference. Returns (action, prob_win, pred_os)."""
-        if self.model is None:
-            return 0, 0.0, 0.0
-        
-        preds = self.model([micro_tensor, macro_tensor], training=False)
-        pw = float(preds[0].numpy().flatten()[0])
-        po = float(preds[1].numpy().flatten()[0])
-        
-        signal = (pw >= self.prob_win_threshold) and (po >= self.pred_os_threshold)
-        action = 1 if signal else 0
-        
-        return action, pw, po
-
-
-# ══════════════════════════════════════════════════════════════════
-#  Simulation Engine
-# ══════════════════════════════════════════════════════════════════
-
-class SimEngine:
-    """Mirrors BridgeEngine but with deterministic tick replay."""
+    pad_start = target_start - pd.Timedelta(days=7)
+    pad_end = target_end + pd.Timedelta(days=4)
     
-    def __init__(self, tick_provider: TickReplayProvider):
-        self.provider = tick_provider
-        self.predictor = ExecPredictor()
-        self.broker = SimulatedBroker()
-        self.optimizer = PathOptimizer()
+    df = pd.read_parquet(parquet_path)
+    df['time_msc_dt'] = pd.to_datetime(df['time_msc'], unit='ms', utc=True)
+    df = df[(df['time_msc_dt'] >= pad_start) & (df['time_msc_dt'] <= pad_end)]
+    if len(df) == 0:
+        return [], [], []
         
-        self.daily_summaries = []
-        self.all_signals = []
+    df['utc_day'] = df['time_msc_dt'].dt.date
+    days = sorted(df['utc_day'].unique())
     
-    def run(self):
-        """Run the full simulation across all trading days."""
-        self.predictor.load()
-        
-        OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-        
-        days = self.provider.days
-        logger.info(f"\n{'='*60}")
-        logger.info(f" SIMULATION START: {len(days)} trading days")
-        logger.info(f"{'='*60}\n")
-        
-        for day_idx, day in enumerate(days):
-            self._simulate_day(day, day_idx)
-        
-        self._generate_reports()
+    # Load Model & Config
+    trade_mode = "follow"
+    prob_win_threshold = 0.55
+    pred_os_threshold = 0.0
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH, "r") as f:
+            cfg = json.load(f)
+            trade_mode = cfg.get('Trade_Mode', 'follow')
+            prob_win_threshold = cfg.get('Prob_Win_threshold', 0.55)
+            pred_os_threshold = cfg.get('Pred_OS_threshold', 0.0)
+            
+    model = tf.keras.models.load_model(str(MODEL_PATH), compile=False)
     
-    def _simulate_day(self, day, day_idx):
-        """Simulate a single trading day."""
-        day_ticks = self.provider.get_day_ticks(day)
-        if len(day_ticks) < 100:
-            logger.warning(f"Day {day}: Only {len(day_ticks)} ticks. Skipping.")
-            return
+    broker = SimulatedBroker()
+    optimizer = PathOptimizer()
+    
+    daily_summaries = []
+    all_signals = []
+    trade_log = []
+    
+    for day_idx, day in enumerate(days):
+        day_df = df[df['utc_day'] == day]
+        day_ticks = day_df.to_dict('records')
+        if len(day_ticks) < 100: continue
         
-        # Day open price
+        lb_df = df[(df['utc_day'] < day) & (df['utc_day'] >= day - pd.Timedelta(days=7))]
+        all_history = lb_df.to_dict('records')
+        
         day_open = day_ticks[0]['bid']
         brick_size = day_open * K_MULTIPLIER
         
-        logger.info(f"📅 Day {day} ({day_idx+1}/{len(self.provider.days)}): "
-                    f"{len(day_ticks):,} ticks, open={day_open:.2f}, bs={brick_size:.4f}")
-        
-        # Get lookback history for path optimization + z-score warmup
-        lookback_ticks = self.provider.get_lookback_ticks(day, lookback_days=7)
-        # BUG FIX: DO NOT include day_ticks in all_history! This was double-feeding ticks and destroying tensors.
-        all_history = lookback_ticks
-        
-        # Path Optimization
-        if len(lookback_ticks) > 1000:
-            best_price, best_idx, best_profit = self.optimizer.find_optimal_anchor(
-                all_history, brick_size
-            )
+        if len(all_history) > 1000:
+            best_price, best_idx, _ = optimizer.find_optimal_anchor(all_history, brick_size)
             if best_price is None:
-                best_price = day_open
-                best_idx = 0
-                logger.warning(f"  PathOptimizer failed. Using day_open as anchor.")
-            else:
-                logger.info(f"  PathOptimizer: anchor={best_price:.2f}, "
-                           f"profit={best_profit:.2f}, start_idx={best_idx}")
+                best_price, best_idx = day_open, 0
         else:
-            best_price = day_open
-            best_idx = 0
-            logger.info(f"  No lookback history. Using day_open as anchor.")
-        
-        # Initialize fresh pipeline
+            best_price, best_idx = day_open, 0
+            
         renko = RenkoBuilder(best_price)
         renko.update_brick_size(brick_size, new_day_open=best_price)
         feature_engine = LiveFeatureEngine()
         feature_engine.update_brick_size(brick_size)
         buffer = InferenceBuffer()
+        broker.reset_daily()
         
-        # Reset daily broker state
-        self.broker.reset_daily()
-        
-        # ── Replay ALL history ticks for z-score warmup ──
+        # Warmup Phase (Do not take trades)
         warmup_bricks = 0
         for i, tick in enumerate(all_history):
-            feat_vec = feature_engine.compute_vector(
-                tick['bid'], tick['ask'], tick['bid_vol'], tick['ask_vol'], tick['time_msc']
-            )
+            feat_vec = feature_engine.compute_vector(tick['bid'], tick['ask'], tick.get('bid_vol',0), tick.get('ask_vol',0), tick['time_msc'])
             if i >= best_idx:
                 buffer.append_tick(feat_vec, renko.brick_count)
-                new_bricks = renko.update_tick(tick['bid'], tick['time_msc'])
-                for brick in new_bricks:
+                for brick in renko.update_tick(tick['bid'], tick['time_msc']):
                     warmup_bricks += 1
                     feature_engine.on_new_brick(brick)
                     buffer.on_brick_close(renko.brick_count - 1, feature_engine.last_macro)
-        
-        # Check warmup gate
+                    
         ticks_zscored = len(feature_engine.zs_ofi.deque)
-        warmup_passed = (warmup_bricks >= 10 and ticks_zscored >= 1000)
+        if warmup_bricks < 10 or ticks_zscored < 1000:
+            continue
+            
+        is_active_month = (day.year == year and day.month == month)
+        is_closeout_phase = (day.year > year or (day.year == year and day.month > month))
         
-        if not warmup_passed:
-            logger.warning(f"  Warmup gate NOT met: {warmup_bricks} bricks, "
-                          f"{ticks_zscored} z-ticks. Skipping day.")
-            self.daily_summaries.append({
-                "day": str(day), "ticks": len(day_ticks), "bricks": 0,
-                "signals": 0, "trades": 0, "wins": 0, "losses": 0,
-                "pnl_r": 0.0, "warmup": False
-            })
-            return
-        
-        logger.info(f"  Warmup PASSED: {warmup_bricks} bricks, {ticks_zscored} z-ticks")
-        
-        # ── Stream today's ticks through the live pipeline ──
         day_bricks = 0
         day_signals = 0
-        day_trades_before = len(self.broker.trade_log)
+        day_trades_before = len(broker.trade_log)
         
-        # Today's ticks are streamed freshly
-        day_trades_before = len(self.broker.trade_log)
-        
+        # Active Phase
         for tick in day_ticks:
-            # 1. Compute features
-            feat_vec = feature_engine.compute_vector(
-                tick['bid'], tick['ask'], tick['bid_vol'], tick['ask_vol'], tick['time_msc']
-            )
-            
-            # 2. Feed to buffer
+            feat_vec = feature_engine.compute_vector(tick['bid'], tick['ask'], tick.get('bid_vol',0), tick.get('ask_vol',0), tick['time_msc'])
             buffer.append_tick(feat_vec, renko.brick_count)
             
-            # 3. Check SL/TP on every tick
-            if self.broker.has_position:
-                self.broker.check_tick(tick)
-            
-            # 4. Feed to Renko
-            new_bricks = renko.update_tick(tick['bid'], tick['time_msc'])
-            
-            for brick in new_bricks:
+            if broker.has_position:
+                broker.check_tick(tick)
+                
+            for brick in renko.update_tick(tick['bid'], tick['time_msc']):
                 day_bricks += 1
                 feature_engine.on_new_brick(brick)
                 tensors = buffer.on_brick_close(renko.brick_count - 1, feature_engine.last_macro)
                 
-                if tensors is not None:
+                if tensors is not None and is_active_month:
                     micro, macro = tensors
-                    action, pw, po = self.predictor.predict(micro, macro)
+                    preds = model([micro, macro], training=False)
+                    pw = float(preds[0].numpy().flatten()[0])
+                    po = float(preds[1].numpy().flatten()[0])
                     
-                    day_signals += 1
-                    self.all_signals.append({
-                        "day": str(day),
-                        "timestamp": brick.timestamp,
-                        "direction": brick.uptrend,
-                        "prob_win": pw,
-                        "pred_os": po,
-                        "action": action
-                    })
+                    if trade_mode == "fade":
+                        signal = (pw <= prob_win_threshold)
+                    else:
+                        signal = (pw >= prob_win_threshold) and (po >= pred_os_threshold)
+                        
+                    action = 1 if signal else 0
                     
-                    if action == 1 and not self.broker.has_position:
-                        # Check daily limit (5 SL losses)
-                        daily_limit = -5.0 * brick_size
-                        if self.broker.daily_pnl < daily_limit:
-                            logger.warning(f"  Daily limit hit. Blocking trade.")
+                    if action == 1 and not broker.has_position:
+                        if broker.daily_pnl < -5.0 * brick_size:
                             continue
                         
-                        is_buy = (brick.uptrend == 1)
                         bs = brick.brick_size
+                        is_buy = (brick.uptrend == 1)
                         
+                        if trade_mode == "fade":
+                            is_buy = not is_buy
+                            
                         if is_buy:
-                            # In live trading, BUY enters at ASK and exits at BID
-                            price = tick['ask']
-                            sl = price - (1.0 * bs)
-                            tp = price + (1.0 * bs)
-                            direction = 1
+                            direction, price = 1, tick['ask']
+                            sl, tp = price - bs, price + bs
                         else:
-                            # In live trading, SELL enters at BID and exits at ASK
-                            price = tick['bid']
-                            sl = price + (1.0 * bs)
-                            tp = price - (1.0 * bs)
-                            direction = -1
-                        
-                        self.broker.execute(direction, price, sl, tp, bs, brick.timestamp)
+                            direction, price = -1, tick['bid']
+                            sl, tp = price + bs, price - bs
+                        broker.execute(direction, price, sl, tp, bs, brick.timestamp)
         
-        # End of day: force close any open position
-        if self.broker.has_position and len(day_ticks) > 0:
-            self.broker.force_close(day_ticks[-1])
-        
-        # Daily summary
-        day_trades = self.broker.trade_log[day_trades_before:]
-        wins = sum(1 for t in day_trades if t['outcome'] == 'WIN')
-        losses = sum(1 for t in day_trades if t['outcome'] == 'LOSS')
-        force_closed = sum(1 for t in day_trades if t['outcome'] == 'FORCE_CLOSE')
-        pnl_r = sum(t['pnl_r'] for t in day_trades)
-        
-        summary = {
-            "day": str(day), "ticks": len(day_ticks), "bricks": day_bricks,
-            "signals": day_signals, "trades": len(day_trades),
-            "wins": wins, "losses": losses, "force_closed": force_closed,
-            "pnl_r": round(pnl_r, 2), "warmup": True
-        }
-        self.daily_summaries.append(summary)
-        
-        wr = (wins / len(day_trades) * 100) if len(day_trades) > 0 else 0
-        logger.info(f"  📊 Day result: {day_bricks} bricks, {len(day_trades)} trades, "
-                    f"{wins}W/{losses}L, WR={wr:.0f}%, PnL={pnl_r:+.2f}R")
+        if broker.has_position and is_closeout_phase:
+            broker.force_close(day_ticks[-1])
+        elif broker.has_position and len(day_ticks) > 0 and not is_active_month:
+            broker.force_close(day_ticks[-1])
+            
+        if is_active_month:
+            day_trades = broker.trade_log[day_trades_before:]
+            wins = sum(1 for t in day_trades if t['outcome'] == 'WIN')
+            losses = sum(1 for t in day_trades if t['outcome'] == 'LOSS')
+            pnl_r = sum(t['pnl_r'] for t in day_trades)
+            daily_summaries.append({
+                "day": str(day), "bricks": day_bricks, "trades": len(day_trades),
+                "wins": wins, "losses": losses, "pnl_r": round(pnl_r, 2), "warmup": True
+            })
+            
+    print(f"[{year}-{month:02d}] Worker finished. Trades: {len(broker.trade_log)}")
+    return broker.trade_log, daily_summaries, all_signals
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--ticks", type=str, default=str(BASE_DIR / "data" / "xauusd_ticks_2026.parquet"))
+    args = parser.parse_args()
     
-    def _generate_reports(self):
-        """Generate all output files."""
-        logger.info(f"\n{'='*60}")
-        logger.info(f" GENERATING REPORTS")
-        logger.info(f"{'='*60}")
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    
+    # 2026 only has data up to May/June
+    tasks = [(2026, m, args.ticks) for m in range(1, 6)]
+    
+    print(f"🚀 Starting 2026 MP Simulation (Baseline) with {min(8, len(tasks))} workers...")
+    start_t = time.time()
+    
+    with mp.Pool(processes=min(8, len(tasks))) as pool:
+        results = pool.starmap(process_month, tasks)
         
-        # 1. Trades CSV
-        if self.broker.trade_log:
-            trades_df = pd.DataFrame(self.broker.trade_log)
-            trades_df.to_csv(OUTPUT_DIR / "sim_trades.csv", index=False)
-            logger.info(f"Saved {len(trades_df)} trades to sim_trades.csv")
+    all_trades = []
+    all_summaries = []
+    for trades, summaries, signals in results:
+        all_trades.extend(trades)
+        all_summaries.extend(summaries)
         
-        # 2. Daily summary CSV
-        summary_df = pd.DataFrame(self.daily_summaries)
-        summary_df.to_csv(OUTPUT_DIR / "sim_daily_summary.csv", index=False)
-        logger.info(f"Saved daily summary to sim_daily_summary.csv")
+    print(f"\n✅ Simulation completed in {(time.time()-start_t)/60:.1f} mins.")
+    
+    # Generate Reports
+    if all_trades:
+        pd.DataFrame(all_trades).to_csv(OUTPUT_DIR / "sim_trades.csv", index=False)
+    if all_summaries:
+        pd.DataFrame(all_summaries).to_csv(OUTPUT_DIR / "sim_daily_summary.csv", index=False)
         
-        # 3. Signals CSV
-        if self.all_signals:
-            signals_df = pd.DataFrame(self.all_signals)
-            signals_df.to_csv(OUTPUT_DIR / "sim_signals.csv", index=False)
-        
-        # 4. Compute final statistics
-        trades = self.broker.trade_log
-        if not trades:
-            logger.warning("No trades executed during simulation!")
-            return
-        
-        # Filter to WIN/LOSS only (exclude FORCE_CLOSE)
-        resolved = [t for t in trades if t['outcome'] in ('WIN', 'LOSS')]
-        total = len(resolved)
-        wins = sum(1 for t in resolved if t['outcome'] == 'WIN')
-        losses = total - wins
-        force_closed = sum(1 for t in trades if t['outcome'] == 'FORCE_CLOSE')
-        
-        wr = (wins / total * 100) if total > 0 else 0
-        total_pnl_r = sum(t['pnl_r'] for t in trades)
-        ev_per_trade = (total_pnl_r / total) if total > 0 else 0
-        
-        # 5. Equity curve
-        cumulative_pnl = np.cumsum([t['pnl_r'] for t in trades])
-        plt.figure(figsize=(12, 6))
-        plt.plot(cumulative_pnl, linewidth=1.5, color='blue')
-        plt.axhline(0, color='red', linestyle='--', alpha=0.5)
-        plt.xlabel("Trade Number")
-        plt.ylabel("Cumulative PnL (R)")
-        plt.title(f"2026 Live Engine Simulation — Equity Curve (WR={wr:.1f}%)")
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        plt.savefig(OUTPUT_DIR / "sim_equity_curve.png", dpi=150)
-        plt.close()
-        logger.info("Saved equity curve to sim_equity_curve.png")
-        
-        # 6. Session report markdown
-        report = f"""# 2026 Live Engine Simulation — Session Report
+    total = len([t for t in all_trades if t['outcome'] in ('WIN', 'LOSS')])
+    wins = sum(1 for t in all_trades if t['outcome'] == 'WIN')
+    losses = sum(1 for t in all_trades if t['outcome'] == 'LOSS')
+    pnl = sum(t['pnl_r'] for t in all_trades)
+    wr = (wins / total * 100) if total > 0 else 0
+    
+    report = f"""# 2026 Live Engine Simulation — Baseline
 
 ## Configuration
 - **K_MULTIPLIER:** {K_MULTIPLIER}
-- **Thresholds:** Prob_Win ≥ {self.predictor.prob_win_threshold}, Pred_OS ≥ {self.predictor.pred_os_threshold}
-- **Temperature Scaling:** T = {self.predictor.T:.4f}
-- **Break-Even:** Disabled
-- **Risk-Reward:** 1:1 (SL = 1 brick, TP = 1 brick)
+- **Risk-Reward:** 1:1
 
 ## Results Summary
 
@@ -540,88 +319,13 @@ class SimEngine:
 | **Total Resolved Trades** | {total} |
 | **Wins** | {wins} |
 | **Losses** | {losses} |
-| **Force Closed (EOD)** | {force_closed} |
 | **Win Rate** | **{wr:.2f}%** |
-| **Total PnL** | {total_pnl_r:+.2f}R |
-| **EV per Trade** | {ev_per_trade:+.4f}R |
-| **Trading Days** | {len([s for s in self.daily_summaries if s['warmup']])} |
-| **Total Signals** | {len(self.all_signals)} |
+| **Total PnL** | {pnl:+.2f}R |
+| **EV per Trade** | {(pnl/total if total>0 else 0):+.4f}R |
 
-## Daily Breakdown
-
-| Day | Bricks | Trades | W | L | WR | PnL (R) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 """
-        for s in self.daily_summaries:
-            if not s['warmup']:
-                continue
-            if s['trades'] > 0:
-                day_wr = s['wins'] / s['trades'] * 100
-                report += f"| {s['day']} | {s['bricks']} | {s['trades']} | {s['wins']} | {s['losses']} | {day_wr:.0f}% | {s['pnl_r']:+.2f} |\n"
-            elif s['signals'] > 0:
-                report += f"| {s['day']} | {s['bricks']} | 0 | — | — | — | 0.00 |\n"
+    with open(OUTPUT_DIR / "sim_session_report.md", "w") as f:
+        f.write(report)
         
-        report += f"""
-## Comparison to Tensor-Based Evaluation
-
-The tensor-based holdout evaluation (EXP-11 baseline) achieved:
-- **762 trades** at **77.82% WR** with **+424.00 EV**
-
-This live engine simulation achieved:
-- **{total} trades** at **{wr:.2f}% WR** with **{total_pnl_r:+.2f} EV**
-
-Any divergence indicates differences between the tensor builder pipeline and the live engine pipeline (path optimization, z-score warmup timing, brick boundary alignment).
-"""
-        
-        with open(OUTPUT_DIR / "sim_session_report.md", "w") as f:
-            f.write(report)
-        
-        logger.info(f"Saved session report to sim_session_report.md")
-        
-        # Final console summary
-        logger.info(f"\n{'='*60}")
-        logger.info(f" SIMULATION COMPLETE")
-        logger.info(f" Trades: {total} | Wins: {wins} | Losses: {losses}")
-        logger.info(f" Win Rate: {wr:.2f}%")
-        logger.info(f" Total PnL: {total_pnl_r:+.2f}R")
-        logger.info(f" EV/Trade: {ev_per_trade:+.4f}R")
-        logger.info(f"{'='*60}")
-
-
-# ══════════════════════════════════════════════════════════════════
-#  Main
-# ══════════════════════════════════════════════════════════════════
-
-def main():
-    parser = argparse.ArgumentParser(description="2026 Live Engine Simulation")
-    parser.add_argument("--ticks", type=str,
-                        default=str(BASE_DIR / "data" / "xauusd_ticks_2026.parquet"),
-                        help="Path to 2026 tick parquet file")
-    parser.add_argument("--verbose", action="store_true", help="Enable debug logging")
-    args = parser.parse_args()
-    
-    level = logging.DEBUG if args.verbose else logging.INFO
-    
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s | %(levelname)s | %(message)s",
-        handlers=[
-            logging.StreamHandler(),
-            logging.FileHandler(str(OUTPUT_DIR / "sim.log"), mode='w')
-        ]
-    )
-    
-    if not os.path.exists(args.ticks):
-        logger.error(f"Tick file not found: {args.ticks}")
-        logger.error("Run tick_collector.py first, then attach TickExporter EA in MT5.")
-        sys.exit(1)
-    
-    provider = TickReplayProvider(args.ticks)
-    engine = SimEngine(provider)
-    engine.run()
-
-
 if __name__ == "__main__":
     main()

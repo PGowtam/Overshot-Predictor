@@ -1,8 +1,9 @@
 """
-2026 Live Engine Simulation — Markov (Multiprocessing)
-======================================================
-Replays historical 2026 ticks through the exact production BridgeEngine pipeline.
-Uses 8-core multiprocessing to evaluate the model ~10x faster.
+2026 Live Engine Simulation — Multi-Threshold Fade
+========================================================
+Runs the deep learning Baseline model across 2026 ticks using Multiprocessing.
+Simultaneously evaluates three Fading thresholds (PW <= 0.35, 0.30, 0.20) using
+three independent SimulatedBroker instances.
 """
 
 import os
@@ -16,7 +17,6 @@ import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from datetime import datetime, timedelta
 import calendar
 
 # ── Path Setup ─────────────────────────────────────────────────────
@@ -37,14 +37,13 @@ from bridge.path_optimizer import PathOptimizer
 logger = logging.getLogger(__name__)
 
 # ── Constants ──────────────────────────────────────────────────────
-EXEC_DIR = BASE_DIR / "outputs" / "exec_markov"
+EXEC_DIR = BASE_DIR / "outputs" / "exec_baseline"
 MODEL_PATH = EXEC_DIR / "model.keras"
-CONFIG_PATH = EXEC_DIR / "config.json"
-OUTPUT_DIR = BASE_DIR / "outputs" / "experiments" / "sim_2026_exec_markov"
-
+OUTPUT_DIR = BASE_DIR / "outputs" / "experiments" / "sim_multi_fade_2026"
 
 class SimulatedBroker:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         self.active_position = None
         self.trade_log = []
         self.next_ticket = 1000
@@ -89,6 +88,7 @@ class SimulatedBroker:
         pnl_r = pnl / pos["brick_size"]
         
         record = {
+            "broker_name": self.name,
             "ticket": pos["ticket"],
             "direction": pos["direction"],
             "entry": pos["entry"],
@@ -114,9 +114,8 @@ class SimulatedBroker:
     def has_position(self):
         return self.active_position is not None
 
-
 def process_month(year, month, parquet_path):
-    """Worker process: Disable Metal GPU to prevent deadlocks, load model, run simulation."""
+    """Worker process: Evaluates 3 thresholds simultaneously."""
     import os
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
     import tensorflow as tf
@@ -135,30 +134,24 @@ def process_month(year, month, parquet_path):
     df['time_msc_dt'] = pd.to_datetime(df['time_msc'], unit='ms', utc=True)
     df = df[(df['time_msc_dt'] >= pad_start) & (df['time_msc_dt'] <= pad_end)]
     if len(df) == 0:
-        return [], [], []
+        return {}, {}
         
     df['utc_day'] = df['time_msc_dt'].dt.date
     days = sorted(df['utc_day'].unique())
     
-    # Load Model & Config
-    trade_mode = "follow"
-    prob_win_threshold = 0.55
-    pred_os_threshold = 0.0
-    if CONFIG_PATH.exists():
-        with open(CONFIG_PATH, "r") as f:
-            cfg = json.load(f)
-            trade_mode = cfg.get('Trade_Mode', 'follow')
-            prob_win_threshold = cfg.get('Prob_Win_threshold', 0.55)
-            pred_os_threshold = cfg.get('Pred_OS_threshold', 0.0)
-            
     model = tf.keras.models.load_model(str(MODEL_PATH), compile=False)
     
-    broker = SimulatedBroker()
+    # Instantiate 3 independent brokers
+    brokers = {
+        "0.35": SimulatedBroker("PW_0.35"),
+        "0.30": SimulatedBroker("PW_0.30"),
+        "0.20": SimulatedBroker("PW_0.20")
+    }
+    
     optimizer = PathOptimizer()
     
-    daily_summaries = []
-    all_signals = []
-    trade_log = []
+    # Store daily summaries per broker
+    daily_summaries = {"0.35": [], "0.30": [], "0.20": []}
     
     for day_idx, day in enumerate(days):
         day_df = df[df['utc_day'] == day]
@@ -183,7 +176,9 @@ def process_month(year, month, parquet_path):
         feature_engine = LiveFeatureEngine()
         feature_engine.update_brick_size(brick_size)
         buffer = InferenceBuffer()
-        broker.reset_daily()
+        
+        for b in brokers.values():
+            b.reset_daily()
         
         # Warmup Phase
         warmup_bricks = 0
@@ -204,16 +199,18 @@ def process_month(year, month, parquet_path):
         is_closeout_phase = (day.year > year or (day.year == year and day.month > month))
         
         day_bricks = 0
-        day_signals = 0
-        day_trades_before = len(broker.trade_log)
+        
+        day_trades_before = {k: len(b.trade_log) for k, b in brokers.items()}
         
         # Active Phase
         for tick in day_ticks:
             feat_vec = feature_engine.compute_vector(tick['bid'], tick['ask'], tick.get('bid_vol',0), tick.get('ask_vol',0), tick['time_msc'])
             buffer.append_tick(feat_vec, renko.brick_count)
             
-            if broker.has_position:
-                broker.check_tick(tick)
+            # Check open positions for all brokers independently
+            for b in brokers.values():
+                if b.has_position:
+                    b.check_tick(tick)
                 
             for brick in renko.update_tick(tick['bid'], tick['time_msc']):
                 day_bricks += 1
@@ -222,63 +219,46 @@ def process_month(year, month, parquet_path):
                 
                 if tensors is not None and is_active_month:
                     micro, macro = tensors
-                    
-                    # Build Markov Seq Tensor
-                    seq_arr = np.zeros(100, dtype=np.float32)
-                    seq_str = brick.sequence[-100:]
-                    start_idx = 100 - len(seq_str)
-                    for i, char in enumerate(seq_str):
-                        if char == '1': seq_arr[start_idx + i] = 1.0
-                        elif char == '0': seq_arr[start_idx + i] = -1.0
-                    seq_tensor = seq_arr[np.newaxis, ...]
-                    
-                    preds = model([micro, macro, seq_tensor], training=False)
+                    preds = model([micro, macro], training=False)
                     pw = float(preds[0].numpy().flatten()[0])
-                    po = float(preds[1].numpy().flatten()[0])
                     
-                    if trade_mode == "fade":
-                        signal = (pw <= prob_win_threshold)
-                    else:
-                        signal = (pw >= prob_win_threshold) and (po >= pred_os_threshold)
-                        
-                    action = 1 if signal else 0
+                    bs = brick.brick_size
+                    # Reversal Strategy: We trade OPPOSITE to the brick's direction
+                    direction = -1 if brick.uptrend == 1 else 1
+                    price = tick['bid'] if direction == -1 else tick['ask']
+                    sl = price + bs if direction == -1 else price - bs
+                    tp = price - bs if direction == -1 else price + bs
                     
-                    if action == 1 and not broker.has_position:
-                        if broker.daily_pnl < -5.0 * brick_size:
-                            continue
-                        
-                        bs = brick.brick_size
-                        is_buy = (brick.uptrend == 1)
-                        
-                        if trade_mode == "fade":
-                            is_buy = not is_buy
-                            
-                        if is_buy:
-                            direction, price = 1, tick['ask']
-                            sl, tp = price - bs, price + bs
-                        else:
-                            direction, price = -1, tick['bid']
-                            sl, tp = price + bs, price - bs
-                        broker.execute(direction, price, sl, tp, bs, brick.timestamp)
+                    # Evaluate each broker against its threshold
+                    thresholds = {"0.35": 0.35, "0.30": 0.30, "0.20": 0.20}
+                    for k, thresh in thresholds.items():
+                        b = brokers[k]
+                        if pw <= thresh and not b.has_position:
+                            if b.daily_pnl >= -5.0 * bs:
+                                b.execute(direction, price, sl, tp, bs, brick.timestamp)
         
-        if broker.has_position and is_closeout_phase:
-            broker.force_close(day_ticks[-1])
-        elif broker.has_position and len(day_ticks) > 0 and not is_active_month:
-            broker.force_close(day_ticks[-1])
+        # Closeout End of Month
+        for b in brokers.values():
+            if b.has_position and is_closeout_phase:
+                b.force_close(day_ticks[-1])
+            elif b.has_position and len(day_ticks) > 0 and not is_active_month:
+                b.force_close(day_ticks[-1])
             
         if is_active_month:
-            day_trades = broker.trade_log[day_trades_before:]
-            wins = sum(1 for t in day_trades if t['outcome'] == 'WIN')
-            losses = sum(1 for t in day_trades if t['outcome'] == 'LOSS')
-            pnl_r = sum(t['pnl_r'] for t in day_trades)
-            daily_summaries.append({
-                "day": str(day), "bricks": day_bricks, "trades": len(day_trades),
-                "wins": wins, "losses": losses, "pnl_r": round(pnl_r, 2), "warmup": True
-            })
+            for k, b in brokers.items():
+                day_trades = b.trade_log[day_trades_before[k]:]
+                wins = sum(1 for t in day_trades if t['outcome'] == 'WIN')
+                losses = sum(1 for t in day_trades if t['outcome'] == 'LOSS')
+                pnl_r = sum(t['pnl_r'] for t in day_trades)
+                daily_summaries[k].append({
+                    "day": str(day), "bricks": day_bricks, "trades": len(day_trades),
+                    "wins": wins, "losses": losses, "pnl_r": round(pnl_r, 2)
+                })
             
-    print(f"[{year}-{month:02d}] Worker finished. Trades: {len(broker.trade_log)}")
-    return broker.trade_log, daily_summaries, all_signals
-
+    print(f"[{year}-{month:02d}] Worker finished.")
+    
+    ret_logs = {k: b.trade_log for k, b in brokers.items()}
+    return ret_logs, daily_summaries
 
 def main():
     parser = argparse.ArgumentParser()
@@ -287,55 +267,57 @@ def main():
     
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     
-    # 2026 only has data up to May/June
     tasks = [(2026, m, args.ticks) for m in range(1, 6)]
     
-    print(f"🚀 Starting 2026 MP Simulation (Markov) with {min(8, len(tasks))} workers...")
+    print(f"🚀 Starting Multi-Threshold MP Simulation (Fade Model) with {min(8, len(tasks))} workers...")
     start_t = time.time()
     
     with mp.Pool(processes=min(8, len(tasks))) as pool:
         results = pool.starmap(process_month, tasks)
         
-    all_trades = []
-    all_summaries = []
-    for trades, summaries, signals in results:
-        all_trades.extend(trades)
-        all_summaries.extend(summaries)
-        
-    print(f"\n✅ Simulation completed in {(time.time()-start_t)/60:.1f} mins.")
+    all_trades = {"0.35": [], "0.30": [], "0.20": []}
+    all_summaries = {"0.35": [], "0.30": [], "0.20": []}
     
-    # Generate Reports
-    if all_trades:
-        pd.DataFrame(all_trades).to_csv(OUTPUT_DIR / "sim_trades.csv", index=False)
-    if all_summaries:
-        pd.DataFrame(all_summaries).to_csv(OUTPUT_DIR / "sim_daily_summary.csv", index=False)
-        
-    total = len([t for t in all_trades if t['outcome'] in ('WIN', 'LOSS')])
-    wins = sum(1 for t in all_trades if t['outcome'] == 'WIN')
-    losses = sum(1 for t in all_trades if t['outcome'] == 'LOSS')
-    pnl = sum(t['pnl_r'] for t in all_trades)
-    wr = (wins / total * 100) if total > 0 else 0
+    for month_logs, month_sums in results:
+        for k in all_trades.keys():
+            all_trades[k].extend(month_logs[k])
+            all_summaries[k].extend(month_sums[k])
+            
+    print(f"\\n✅ Simulation completed in {(time.time()-start_t)/60:.1f} mins.")
     
-    report = f"""# 2026 Live Engine Simulation — Markov
-
-## Configuration
-- **K_MULTIPLIER:** {K_MULTIPLIER}
-- **Risk-Reward:** 1:1
-
-## Results Summary
-
-| Metric | Value |
-| :--- | :--- |
-| **Total Resolved Trades** | {total} |
-| **Wins** | {wins} |
-| **Losses** | {losses} |
-| **Win Rate** | **{wr:.2f}%** |
-| **Total PnL** | {pnl:+.2f}R |
-| **EV per Trade** | {(pnl/total if total>0 else 0):+.4f}R |
-
-"""
-    with open(OUTPUT_DIR / "sim_session_report.md", "w") as f:
-        f.write(report)
+    # Save CSVs
+    for k in all_trades.keys():
+        if all_trades[k]:
+            pd.DataFrame(all_trades[k]).to_csv(OUTPUT_DIR / f"sim_trades_{k.replace('.', '')}.csv", index=False)
+        if all_summaries[k]:
+            pd.DataFrame(all_summaries[k]).to_csv(OUTPUT_DIR / f"sim_daily_summary_{k.replace('.', '')}.csv", index=False)
+            
+    # Generate Report
+    report_lines = [
+        "# 2026 Multi-Threshold Fade Strategy (Baseline Model)",
+        "",
+        "## Results Summary",
+        "",
+        "| Threshold | Total Trades | Wins | Losses | Win Rate | Gross PnL | EV per Trade |",
+        "| :--- | :--- | :--- | :--- | :--- | :--- | :--- |"
+    ]
+    
+    for k in sorted(all_trades.keys(), reverse=True):
+        trades = all_trades[k]
+        total = len([t for t in trades if t['outcome'] in ('WIN', 'LOSS')])
+        wins = sum(1 for t in trades if t['outcome'] == 'WIN')
+        losses = sum(1 for t in trades if t['outcome'] == 'LOSS')
+        pnl = sum(t['pnl_r'] for t in trades)
+        wr = (wins / total * 100) if total > 0 else 0
+        ev = (pnl / total) if total > 0 else 0
         
+        report_lines.append(f"| PW <= {k} | {total} | {wins} | {losses} | **{wr:.2f}%** | {pnl:+.2f}R | {ev:+.4f}R |")
+        
+    report_lines.append("")
+    report_lines.append(f"> Simulation generated concurrently in {(time.time()-start_t)/60:.1f} mins.")
+    
+    with open(OUTPUT_DIR / "multi_fade_report.md", "w") as f:
+        f.write("\\n".join(report_lines))
+
 if __name__ == "__main__":
     main()

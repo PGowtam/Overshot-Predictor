@@ -19,9 +19,11 @@ from tensorflow.keras.callbacks import (
 # Setup Paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR / "src"))
-from models_exec import build_baseline_exec_model, compile_model
+from tensorflow.keras.losses import BinaryFocalCrossentropy, Huber
+from tensorflow.keras.optimizers import Adam
+from models_exec import build_baseline_exec_model
 
-OUTPUT_DIR = BASE_DIR / "outputs" / "exec_baseline"
+OUTPUT_DIR = BASE_DIR / "outputs" / "exec_focal"
 TENSOR_DIR = BASE_DIR / "outputs" / "exec_tensors"
 
 MODEL_PATH = OUTPUT_DIR / "model.keras"
@@ -46,11 +48,12 @@ def generate_markdown_report(history):
     train_loss = history.history['loss']
     best_epoch = np.argmin(val_loss) + 1
     
-    report = f"""# Execution Baseline Model (Model A) - Training Report
+    report = f"""# Focal Loss Execution Model - Training Report
 
 ## Configuration
-- **Model**: Dual-Head CNN+LSTM (Micro + Macro)
-- **Data Source**: Execution Labels (Sim-Labeler)
+- **Model**: Dual-Head CNN+LSTM
+- **Loss**: BinaryFocalCrossentropy (gamma=2.0, alpha=0.75)
+- **Data Source**: Imbalanced Prior
 - **Batch Size**: {BATCH_SIZE}
 - **Epochs Ran**: {len(val_loss)}
 - **Best Epoch**: {best_epoch}
@@ -59,7 +62,7 @@ def generate_markdown_report(history):
 - **Best Validation Loss**: `{np.min(val_loss):.4f}`
 - **Final Train Loss**: `{train_loss[-1]:.4f}`
 
-*(Model saved to outputs/exec_baseline/model.keras)*
+*(Model saved to outputs/exec_focal/model.keras)*
 """
     with open(REPORT_PATH, 'w') as f:
         f.write(report)
@@ -87,29 +90,51 @@ def main():
     
     data = load_tensors()
     
-    print("\n🏗️  Building Baseline Execution Model...")
+    print("\n🏗️  Building Focal Loss Execution Model...")
     model = build_baseline_exec_model()
-    model = compile_model(model)
+    
+    model.compile(
+        optimizer=Adam(learning_rate=1e-3),
+        loss={
+            'prob_win': BinaryFocalCrossentropy(gamma=2.0),
+            'pred_os': Huber(delta=1.0)
+        },
+        loss_weights={
+            'prob_win': 1.0,
+            'pred_os': 0.3
+        },
+        metrics={
+            'prob_win': 'accuracy',
+            'pred_os': 'mae'
+        }
+    )
     
     callbacks = [
         EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True, verbose=1),
-        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1, min_lr=1e-6),
+        ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, min_lr=1e-6, verbose=1),
         ModelCheckpoint(filepath=str(MODEL_PATH), monitor='val_loss', save_best_only=True, verbose=1),
         CSVLogger(str(LOG_PATH)),
         OverfittingMonitor()
     ]
     
-    print(f"\n🚀 Starting training (max epochs={MAX_EPOCHS}, batch={BATCH_SIZE})...")
+    print("\n🚀 Training model...")
+    # Keras does not support class_weight for multi-output models, must use sample_weight
+    w_train = np.where(data["train"]["y_class"] == 1, 0.6467 / 0.3533, 1.0)
+    
+    w_val = np.ones_like(data["val"]["y_class"])
+    
     history = model.fit(
         x=[data["train"]["micro"], data["train"]["macro"]],
         y=[data["train"]["y_class"], data["train"]["y_mag"]],
         validation_data=(
             [data["val"]["micro"], data["val"]["macro"]],
-            [data["val"]["y_class"], data["val"]["y_mag"]]
+            [data["val"]["y_class"], data["val"]["y_mag"]],
+            [w_val, w_val]
         ),
-        epochs=MAX_EPOCHS,
         batch_size=BATCH_SIZE,
+        epochs=MAX_EPOCHS,
         callbacks=callbacks,
+        sample_weight=[w_train, np.ones_like(w_train)],
         verbose=1
     )
     

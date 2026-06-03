@@ -2,8 +2,8 @@
 Execution-based Label Generator (Sim-Labeler)
 =============================================
 Generates y_class and y_mag labels by running an imaginary trade on every
-single Renko brick using strict Bid/Ask execution prices, perfectly matching
-the live simulation conditions at K=0.00118.
+single Renko brick. Features an 8-worker Month-Level chunking architecture
+with a 3-Phase approach (Warmup, Active, Closeout) for max efficiency.
 """
 
 import os
@@ -15,7 +15,8 @@ import multiprocessing as mp
 import numpy as np
 import pandas as pd
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
+import calendar
 
 # ── Path Setup ─────────────────────────────────────────────────────
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -103,8 +104,9 @@ class SimTrade:
 
 
 class LabelingBroker:
-    def __init__(self, year):
+    def __init__(self, year, month):
         self.year = year
+        self.month = month
         self.active_trades = []
         self.resolved_labels = []
         
@@ -121,6 +123,7 @@ class LabelingBroker:
                 y_class, y_mag = result
                 self.resolved_labels.append({
                     "year": self.year,
+                    "month": self.month,
                     "brick_id": trade.brick_id,
                     "timestamp": trade.timestamp,
                     "direction": trade.direction,
@@ -136,6 +139,7 @@ class LabelingBroker:
             y_class, y_mag = trade.force_close(bid, ask)
             self.resolved_labels.append({
                 "year": self.year,
+                "month": self.month,
                 "brick_id": trade.brick_id,
                 "timestamp": trade.timestamp,
                 "direction": trade.direction,
@@ -145,17 +149,16 @@ class LabelingBroker:
         self.active_trades = []
 
 
-def process_year(year: str, files: list):
-    logger = logging.getLogger(f"Worker-{year}")
-    logger.info(f"Processing year {year} ({len(files)} files)...")
+def process_chunk(year: int, month: int, files: list, target_start, target_end):
+    log = logging.getLogger(f"Worker-{year}-{month:02d}")
+    log.info(f"Processing chunk {year}-{month:02d} ({len(files)} padded files)...")
     
-    # Load all parquet files for the year
     dfs = []
     for f in sorted(files):
         try:
             dfs.append(pd.read_parquet(f))
         except Exception as e:
-            logger.error(f"Error reading {f}: {e}")
+            log.error(f"Error reading {f}: {e}")
             
     if not dfs:
         return
@@ -164,39 +167,51 @@ def process_year(year: str, files: list):
     if 'timestamp' in df.columns and 'time_msc' not in df.columns:
         df['time_msc'] = pd.to_datetime(df['timestamp']).astype('int64') // 10**6
         
-    # Memory Optimization: Downcast to float32 to avoid M4 16GB swap bottleneck
+    # Memory Optimization: Downcast to float32
     for col in ['bid', 'ask', 'bid_vol', 'ask_vol']:
         if col in df.columns:
             df[col] = df[col].astype(np.float32)
             
     df = df.sort_values('time_msc').reset_index(drop=True)
-    
-    # Convert back to UTC dates to detect boundaries
     df['utc_day'] = pd.to_datetime(df['time_msc'], unit='ms', utc=True).dt.date
     days = sorted(df['utc_day'].unique())
     
     optimizer = PathOptimizer()
-    broker = LabelingBroker(year)
-    
+    broker = LabelingBroker(year, month)
     TENSOR_DIR.mkdir(parents=True, exist_ok=True)
     
     global_brick_id = 0
-    total_days = len(days)
-    
-    logger.info(f"Year {year} has {len(df):,} ticks across {total_days} days.")
+    total_active_days = 0
     
     for day_idx, day in enumerate(days):
-        day_mask = df['utc_day'] == day
-        day_df = df[day_mask]
+        day_df = df[df['utc_day'] == day]
         day_ticks = day_df.to_dict('records')
         
         if len(day_ticks) < 100:
             continue
             
+        is_warmup = day < target_start
+        is_active = target_start <= day <= target_end
+        is_closeout = day > target_end
+        
+        if is_warmup:
+            continue
+            
+        # ── Phase 3: Closeout (Check existing trades ONLY) ──
+        if is_closeout:
+            if not broker.active_trades:
+                break # All trades resolved! We can safely terminate processing this chunk.
+                
+            for tick in day_ticks:
+                broker.check_ticks(tick['bid'], tick['ask'])
+            continue
+            
+        # ── Phase 1 & 2: Active ──
+        total_active_days += 1
+            
         day_open = day_ticks[0]['bid']
         brick_size = day_open * K_MULTIPLIER
         
-        # Path optimization over last 7 days
         start_date = day - pd.Timedelta(days=7)
         lb_mask = (df['utc_day'] >= start_date) & (df['utc_day'] < day)
         lb_df = df[lb_mask]
@@ -209,37 +224,15 @@ def process_year(year: str, files: list):
             if best_price_opt is not None:
                 best_price = best_price_opt
                 
-        # Run Renko & Pipeline
         renko = RenkoBuilder(best_price)
         renko.update_brick_size(brick_size, new_day_open=best_price)
         feature_engine = LiveFeatureEngine()
         feature_engine.update_brick_size(brick_size)
         buffer = InferenceBuffer()
         
-        # ── Z-score Warmup ──
         if len(lb_df) > 1000:
             lb_ticks = lb_df.to_dict('records')
-            for i, tick in enumerate(lb_ticks):
-                # Pass actual bid_vol / ask_vol
-                bid_vol = tick.get('bid_vol', 0.0)
-                ask_vol = tick.get('ask_vol', 0.0)
-                feat_vec = feature_engine.compute_vector(
-                    tick['bid'], tick['ask'], bid_vol, ask_vol, tick['time_msc']
-                )
-                if best_price_opt is not None and i >= 0: # We should ideally start buffer appending after anchor
-                    pass # Simplified warmup: just feed features for z-score. Buffer is short memory anyway.
-                    # Actually, InferenceBuffer needs to be warmed up too, but since we are doing 7 days, it's fine.
-        
-        # We'll just reset feature engine and do full warmup like sim_live_engine_exec
-        feature_engine = LiveFeatureEngine()
-        feature_engine.update_brick_size(brick_size)
-        buffer = InferenceBuffer()
-        
-        best_idx = 0 # Dummy for now, sim_live_engine uses exact start_idx from optimizer. We'll just use the day's ticks.
-        # Let's do the proper warmup from lb_ticks:
-        if len(lb_df) > 1000:
-            lb_ticks = lb_df.to_dict('records')
-            for i, tick in enumerate(lb_ticks):
+            for tick in lb_ticks:
                 bid_vol = tick.get('bid_vol', 0.0)
                 ask_vol = tick.get('ask_vol', 0.0)
                 feat_vec = feature_engine.compute_vector(
@@ -251,72 +244,60 @@ def process_year(year: str, files: list):
                     feature_engine.on_new_brick(brick)
                     buffer.on_brick_close(renko.brick_count - 1, feature_engine.last_macro)
                     
-        # Now process today's ticks
         for tick in day_ticks:
             bid_vol = tick.get('bid_vol', 0.0)
             ask_vol = tick.get('ask_vol', 0.0)
             
-            # 1. Compute features
             feat_vec = feature_engine.compute_vector(
                 tick['bid'], tick['ask'], bid_vol, ask_vol, tick['time_msc']
             )
-            
-            # 2. Append to buffer
             buffer.append_tick(feat_vec, renko.brick_count)
             
-            # 3. Check active trades
-            broker.check_ticks(tick['bid'], tick['ask'])
+            if is_active:
+                broker.check_ticks(tick['bid'], tick['ask'])
             
-            # 4. Form bricks
             new_bricks = renko.update_tick(tick['bid'], tick['time_msc'])
             for brick in new_bricks:
-                global_brick_id += 1
-                
-                # Update feature engine and buffer
                 feature_engine.on_new_brick(brick)
                 buffer.on_brick_close(renko.brick_count - 1, feature_engine.last_macro)
                 
-                if len(buffer.snapshots) > 0:
-                    micro = buffer.snapshots[-1]
-                    macro = np.array(buffer.macro[-1], dtype=np.float32)
-                    # Save tensors directly
-                    np.save(TENSOR_DIR / f"micro_{year}_{global_brick_id}.npy", micro)
-                    np.save(TENSOR_DIR / f"macro_{year}_{global_brick_id}.npy", macro)
+                if is_active:
+                    global_brick_id += 1
                     
-                    # Save Markov sequence
-                    with open(TENSOR_DIR / f"seq_{year}_{global_brick_id}.txt", "w") as f:
-                        f.write(brick.sequence)
-                
-                # Open imaginary trade
-                direction = 1 if brick.uptrend == 1 else -1
-                entry = tick['ask'] if direction == 1 else tick['bid']
-                
-                broker.open_trade(
-                    brick_id=global_brick_id,
-                    timestamp=brick.timestamp,
-                    direction=direction,
-                    entry=entry,
-                    brick_size=brick.brick_size
-                )
-                
-        if (day_idx + 1) % 10 == 0:
-            logger.info(f"  [{day_idx+1}/{total_days}] {day} | Bricks: {global_brick_id} | Active Trades: {len(broker.active_trades)}")
+                    if len(buffer.snapshots) > 0:
+                        micro = buffer.snapshots[-1]
+                        macro = np.array(buffer.macro[-1], dtype=np.float32)
+                        
+                        # Save tensors
+                        np.save(TENSOR_DIR / f"micro_{year}_{month:02d}_{global_brick_id}.npy", micro)
+                        np.save(TENSOR_DIR / f"macro_{year}_{month:02d}_{global_brick_id}.npy", macro)
+                        with open(TENSOR_DIR / f"seq_{year}_{month:02d}_{global_brick_id}.txt", "w") as f:
+                            f.write(brick.sequence)
+                    
+                    # Open imaginary trade
+                    direction = 1 if brick.uptrend == 1 else -1
+                    entry = tick['ask'] if direction == 1 else tick['bid']
+                    broker.open_trade(
+                        brick_id=global_brick_id,
+                        timestamp=brick.timestamp,
+                        direction=direction,
+                        entry=entry,
+                        brick_size=brick.brick_size
+                    )
+                    
+        if is_active and total_active_days % 5 == 0:
+            log.info(f"  [{year}-{month:02d}] Processed {total_active_days} days | Bricks: {global_brick_id} | Active Trades: {len(broker.active_trades)}")
 
-    # Force close at end of year
-    if len(day_ticks) > 0:
-        broker.force_close_all(day_ticks[-1]['bid'], day_ticks[-1]['ask'])
+    # Force close any stragglers
+    if broker.active_trades and len(df) > 0:
+        last_row = df.iloc[-1]
+        broker.force_close_all(last_row['bid'], last_row['ask'])
         
     labels_df = pd.DataFrame(broker.resolved_labels)
     if not labels_df.empty:
-        out_path = OUTPUT_DIR / f"sim_labels_{year}.parquet"
+        out_path = OUTPUT_DIR / f"sim_labels_{year}_{month:02d}.parquet"
         labels_df.to_parquet(out_path)
-        logger.info(f"✅ Saved {len(labels_df)} labels for {year} to {out_path}")
-        
-        # Log distribution
-        win_rate = labels_df['y_class'].mean() * 100
-        logger.info(f"   Win Rate: {win_rate:.2f}%")
-        logger.info(f"   LOSS y_mag mean: {labels_df[labels_df['y_class']==0]['y_mag'].mean():.4f}")
-        logger.info(f"   WIN y_mag mean:  {labels_df[labels_df['y_class']==1]['y_mag'].mean():.4f}")
+        log.info(f"✅ Saved {len(labels_df)} labels for {year}-{month:02d} to {out_path}")
 
 
 def mp_worker(args):
@@ -329,13 +310,13 @@ def mp_worker(args):
             logging.FileHandler(str(OUTPUT_DIR / "labeler_mp.log"), mode='a')
         ]
     )
-    yr, files = args
-    process_year(yr, files)
+    yr, mo, files, t_start, t_end = args
+    process_chunk(yr, mo, files, t_start, t_end)
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--year", type=str, default="all", help="Specific year to process, or 'all'")
-    parser.add_argument("--workers", type=int, default=3, help="Number of MP workers")
+    parser.add_argument("--workers", type=int, default=8, help="Number of MP workers")
     args = parser.parse_args()
     
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -349,32 +330,44 @@ def main():
         ]
     )
     
+    logger.info("Discovering all parquet files...")
     all_files = glob.glob(str(BASE_DIR / "Data" / "Raw" / "Ticks" / "**" / "*.parquet"), recursive=True)
     
-    # Group by year folder
-    years = {}
+    file_dict = {}
     for f in all_files:
-        parts = f.split(os.sep)
-        try:
-            idx = parts.index("Ticks")
-            yr = parts[idx+1]
-            if yr.isdigit() and len(yr) == 4:
-                if yr not in years:
-                    years[yr] = []
-                years[yr].append(f)
-        except ValueError:
-            pass
-            
-    sorted_years = sorted(years.keys())
+        path = Path(f)
+        day_str = path.stem
+        month_str = path.parent.name
+        year_str = path.parent.parent.name
+        
+        if day_str.isdigit() and month_str.isdigit() and year_str.isdigit():
+            try:
+                dt = datetime(int(year_str), int(month_str), int(day_str)).date()
+                file_dict[dt] = f
+            except ValueError:
+                pass
+                
+    year_months = sorted(list(set((dt.year, dt.month) for dt in file_dict.keys())))
+    logger.info(f"Found {len(year_months)} unique months of data to process.")
     
-    if args.year != "all":
-        if args.year in years:
-            sorted_years = [args.year]
-        else:
-            logger.error(f"Year {args.year} not found in data.")
-            return
-
-    tasks = [(yr, years[yr]) for yr in sorted_years]
+    tasks = []
+    for y, m in year_months:
+        target_start = datetime(y, m, 1).date()
+        _, last_day = calendar.monthrange(y, m)
+        target_end = datetime(y, m, last_day).date()
+        
+        load_start = target_start - timedelta(days=7)
+        load_end = target_end + timedelta(days=7)
+        
+        chunk_files = []
+        curr = load_start
+        while curr <= load_end:
+            if curr in file_dict:
+                chunk_files.append(file_dict[curr])
+            curr += timedelta(days=1)
+            
+        if chunk_files:
+            tasks.append((y, m, chunk_files, target_start, target_end))
     
     if args.workers > 1 and len(tasks) > 1:
         logger.info(f"Starting multiprocessing pool with {args.workers} workers...")
