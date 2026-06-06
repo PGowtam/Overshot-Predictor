@@ -69,3 +69,43 @@ class RegimeTrackerV4:
             if k in self.histories:
                 pcts[f"{k}_pct"] = self.get_percentile(k, v)
         return pcts
+
+class RegimeTrackerBrickV4:
+    def __init__(self, lookback_bricks=1000):
+        from collections import deque
+        self.lookback_bricks = lookback_bricks
+        self.histories = {
+            'spread_current': deque(maxlen=lookback_bricks),
+            'abs_ofi_peak': deque(maxlen=lookback_bricks)
+        }
+        # Pre-sorted arrays for fast percentile lookup, updated periodically or on demand
+        self._sorted = {
+            'spread_current': np.array([]),
+            'abs_ofi_peak': np.array([])
+        }
+        self._dirty = {
+            'spread_current': True,
+            'abs_ofi_peak': True
+        }
+        
+    def add_brick(self, spread_current, abs_ofi_peak):
+        self.histories['spread_current'].append(spread_current)
+        self.histories['abs_ofi_peak'].append(abs_ofi_peak)
+        self._dirty['spread_current'] = True
+        self._dirty['abs_ofi_peak'] = True
+        
+    def is_ready(self, min_samples=100):
+        return len(self.histories['spread_current']) >= min_samples
+        
+    def _ensure_sorted(self, feature_name):
+        if self._dirty[feature_name]:
+            self._sorted[feature_name] = np.sort(self.histories[feature_name])
+            self._dirty[feature_name] = False
+            
+    def get_percentile(self, feature_name, value):
+        if not self.is_ready():
+            return np.nan
+        self._ensure_sorted(feature_name)
+        arr = self._sorted[feature_name]
+        idx = np.searchsorted(arr, value, side='right')
+        return (idx / len(arr)) * 100.0
