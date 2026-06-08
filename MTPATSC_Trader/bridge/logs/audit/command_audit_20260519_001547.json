@@ -1,0 +1,49 @@
+{
+  "timestamp": "2026-05-19T00:15:34.265597",
+  "tick_port": 9000,
+  "cmd_port": 9001,
+  "volume": 0.01,
+  "tests": {
+    "cmd_connect": {
+      "PASS": true
+    },
+    "buy": {
+      "PASS": true,
+      "ticket": 145747740,
+      "latency_ms": 364.8,
+      "price": 4541.59,
+      "sl": 4528.2293025,
+      "tp": 4554.9506975
+    },
+    "modifysl": {
+      "PASS": false,
+      "error": "{'req_id': '22bbae0f', 'ticket': 145747740, 'status': 'ERROR', 'error_code': '10016'}"
+    },
+    "close_buy": {
+      "PASS": true,
+      "latency_ms": 358.9
+    },
+    "sell": {
+      "PASS": true,
+      "ticket": 145747757,
+      "latency_ms": 356.0
+    },
+    "close_sell": {
+      "PASS": true,
+      "latency_ms": 272.6
+    }
+  },
+  "market": {
+    "bid": 4541.37,
+    "ask": 4541.59,
+    "spread": 0.22
+  },
+  "summary": {
+    "total_tests": 6,
+    "passed": 5,
+    "failed": 1,
+    "avg_latency_ms": 338.1,
+    "max_latency_ms": 364.8
+  },
+  "verdict": "FAIL"
+}

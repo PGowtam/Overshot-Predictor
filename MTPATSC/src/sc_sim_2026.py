@@ -79,9 +79,12 @@ def load_cpp_library():
 def scan_exit_ticks(bids, asks, times, start_idx, direction, entry, tp, sl):
     """
     Scans forward tick-by-tick to find when TP or SL is touched.
+    IMPORTANT: Starts from start_idx + 1 to skip the fill tick itself.
+    This prevents instant ghost wins where the TP is already past at the
+    exact moment of entry (a lookahead artifact from fast-moving bricks).
     Returns: (is_win, exit_time)
     """
-    for i in range(start_idx, len(bids)):
+    for i in range(start_idx + 1, len(bids)):
         bid = bids[i]
         ask = asks[i]
         t = times[i]
@@ -105,7 +108,9 @@ def main():
     SIM_OUT_DIR = OUTPUT_DIR / "sim_2026_5ers"
     SIM_OUT_DIR.mkdir(parents=True, exist_ok=True)
     
-    ticks_path = BASE_DIR / "Data" / "xauusd_ticks_5ers_2026.parquet"
+    ticks_path = BASE_DIR / "Data" / "xauusd_ticks_5ers_2026_clean.parquet"
+    if not ticks_path.exists():
+        ticks_path = BASE_DIR / "Data" / "xauusd_ticks_5ers_2026.parquet"
     if not ticks_path.exists():
         # Fallback to lower-case folder if exists
         ticks_path = BASE_DIR / "data" / "xauusd_ticks_5ers_2026.parquet"
@@ -224,6 +229,7 @@ def main():
     active_trade = None # None or dict
     trade_log = []
     daily_summaries = {}
+    last_signal_brick_time = -1  # Guard: prevent multiple trades on same-timestamp bricks
     
     T1_threshold = config.get("T1_threshold", 1.0)
     T2_threshold = config.get("T2_threshold", 1.0)
@@ -270,6 +276,13 @@ def main():
             
         # 3. Check Signal Generation
         if active_trade is None:
+            # Guard: skip bricks that share the exact same millisecond timestamp as
+            # the last signal. This prevents a cascade of ghost trades when multiple
+            # consecutive bricks happen to close at the identical tick (e.g., during
+            # a gap open or replay boundary).
+            if b_time == last_signal_brick_time:
+                continue
+            
             p_t0 = probs[i, 0]
             if p_t0 > veto_threshold:
                 continue # Vetoed
@@ -360,8 +373,12 @@ def main():
                 fill_index = tick_idx
                 
             # Scan tick-by-tick for TP/SL touch starting from fill_index
+            # Note: scan_exit_ticks starts at fill_index+1 to skip the fill tick itself
             is_win, exit_time = scan_exit_ticks(bids, asks, times, fill_index, direction, entry, tp, sl)
             pnl_R = rr if is_win else -1.0
+            
+            # Record the timestamp of this signal so we skip duplicate-timestamp bricks
+            last_signal_brick_time = b_time
             
             active_trade = {
                 "brick_id": brick['brick_id'],
