@@ -1,0 +1,49 @@
+{
+  "audit": {
+    "spread": {
+      "PASS": false,
+      "drift_pct": 45.0,
+      "live_mean": 0.5,
+      "live_std": 0.1,
+      "live_median": 0.48,
+      "train_mean": 0.1,
+      "train_std": 0.02,
+      "train_median": 0.09
+    },
+    "velocity": {
+      "PASS": true,
+      "drift_pct": 5.0,
+      "live_median_dt_ms": 210,
+      "live_mean_dt_ms": 220,
+      "train_median_dt_ms": 200,
+      "train_mean_dt_ms": 210
+    },
+    "volume": {
+      "live_vol_pct": 0.0,
+      "train_vol_pct": 90.0,
+      "fallback_required": true
+    },
+    "verdict": {
+      "spread_ok": false,
+      "velocity_ok": true,
+      "volume_fallback_required": true,
+      "PROCEED": false,
+      "NOTES": "Spread too wide"
+    }
+  },
+  "fallback": {
+    "skip": false,
+    "PASS": true,
+    "balanced": true,
+    "total_ticks": 1000,
+    "pos_count": 480,
+    "neg_count": 470,
+    "zero_count": 50,
+    "pos_ratio": 0.48,
+    "neg_ratio": 0.47,
+    "zero_ratio": 0.05,
+    "pos_of_nonzero": 0.505,
+    "note": "Balanced"
+  },
+  "timestamp": "2026-05-18T23:32:08.649512"
+}

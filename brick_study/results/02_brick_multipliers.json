@@ -1,0 +1,268 @@
+{
+  "K=0.00118": {
+    "multiplier": 0.00118,
+    "label": "1.0x (current)",
+    "example_bs_at_2400": 2.83,
+    "n_bricks": 6990,
+    "bricks_per_day": 22.33,
+    "brick_size_mean": 2.837,
+    "brick_size_std": 0.236,
+    "spread_pct_mean": 15.07,
+    "spread_pct_median": 13.41,
+    "mean_dur_min": 76.2,
+    "median_dur_min": 17.8,
+    "trend_persistence": 3.06,
+    "ticks_per_brick": 7908.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 6786,
+        "wr": 0.419393,
+        "unresolved": 203
+      },
+      "1:1.5": {
+        "n": 6475,
+        "wr": 0.325097,
+        "unresolved": 514
+      },
+      "1:2.0": {
+        "n": 6136,
+        "wr": 0.254726,
+        "unresolved": 853
+      }
+    },
+    "eff_rr": 0.7386,
+    "breakeven_wr": 0.5752,
+    "naive_11_wr": 0.4194,
+    "margin": -0.1558,
+    "annual_signals": 1396.0
+  },
+  "K=0.0015": {
+    "multiplier": 0.0015,
+    "label": "1.27x",
+    "example_bs_at_2400": 3.6,
+    "n_bricks": 4395,
+    "bricks_per_day": 14.04,
+    "brick_size_mean": 3.603,
+    "brick_size_std": 0.3,
+    "spread_pct_mean": 11.8,
+    "spread_pct_median": 10.63,
+    "mean_dur_min": 120.7,
+    "median_dur_min": 29.0,
+    "trend_persistence": 3.06,
+    "ticks_per_brick": 12581.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 4016,
+        "wr": 0.425797,
+        "unresolved": 378
+      },
+      "1:1.5": {
+        "n": 3649,
+        "wr": 0.322006,
+        "unresolved": 745
+      },
+      "1:2.0": {
+        "n": 3361,
+        "wr": 0.23981,
+        "unresolved": 1033
+      }
+    },
+    "eff_rr": 0.7894,
+    "breakeven_wr": 0.5588,
+    "naive_11_wr": 0.4258,
+    "margin": -0.133,
+    "annual_signals": 878.0
+  },
+  "K=0.00177": {
+    "multiplier": 0.00177,
+    "label": "1.5x",
+    "example_bs_at_2400": 4.25,
+    "n_bricks": 3169,
+    "bricks_per_day": 10.12,
+    "brick_size_mean": 4.255,
+    "brick_size_std": 0.352,
+    "spread_pct_mean": 10.06,
+    "spread_pct_median": 8.95,
+    "mean_dur_min": 166.9,
+    "median_dur_min": 40.8,
+    "trend_persistence": 3.14,
+    "ticks_per_brick": 17447.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 2676,
+        "wr": 0.433109,
+        "unresolved": 492
+      },
+      "1:1.5": {
+        "n": 2349,
+        "wr": 0.312473,
+        "unresolved": 819
+      },
+      "1:2.0": {
+        "n": 2114,
+        "wr": 0.219962,
+        "unresolved": 1054
+      }
+    },
+    "eff_rr": 0.8175,
+    "breakeven_wr": 0.5502,
+    "naive_11_wr": 0.4331,
+    "margin": -0.1171,
+    "annual_signals": 633.0
+  },
+  "K=0.002": {
+    "multiplier": 0.002,
+    "label": "1.69x",
+    "example_bs_at_2400": 4.8,
+    "n_bricks": 2468,
+    "bricks_per_day": 7.88,
+    "brick_size_mean": 4.802,
+    "brick_size_std": 0.397,
+    "spread_pct_mean": 8.97,
+    "spread_pct_median": 7.88,
+    "mean_dur_min": 213.9,
+    "median_dur_min": 55.4,
+    "trend_persistence": 3.12,
+    "ticks_per_brick": 22399.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 1938,
+        "wr": 0.423117,
+        "unresolved": 529
+      },
+      "1:1.5": {
+        "n": 1675,
+        "wr": 0.299104,
+        "unresolved": 792
+      },
+      "1:2.0": {
+        "n": 1489,
+        "wr": 0.199463,
+        "unresolved": 978
+      }
+    },
+    "eff_rr": 0.8358,
+    "breakeven_wr": 0.5447,
+    "naive_11_wr": 0.4231,
+    "margin": -0.1216,
+    "annual_signals": 493.0
+  },
+  "K=0.00236": {
+    "multiplier": 0.00236,
+    "label": "2.0x",
+    "example_bs_at_2400": 5.66,
+    "n_bricks": 1797,
+    "bricks_per_day": 5.74,
+    "brick_size_mean": 5.672,
+    "brick_size_std": 0.47,
+    "spread_pct_mean": 7.59,
+    "spread_pct_median": 6.72,
+    "mean_dur_min": 293.0,
+    "median_dur_min": 83.6,
+    "trend_persistence": 3.06,
+    "ticks_per_brick": 30769.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 1221,
+        "wr": 0.446355,
+        "unresolved": 575
+      },
+      "1:1.5": {
+        "n": 997,
+        "wr": 0.300903,
+        "unresolved": 799
+      },
+      "1:2.0": {
+        "n": 877,
+        "wr": 0.191562,
+        "unresolved": 919
+      }
+    },
+    "eff_rr": 0.8591,
+    "breakeven_wr": 0.5379,
+    "naive_11_wr": 0.4464,
+    "margin": -0.0915,
+    "annual_signals": 359.0
+  },
+  "K=0.00295": {
+    "multiplier": 0.00295,
+    "label": "2.5x",
+    "example_bs_at_2400": 7.08,
+    "n_bricks": 1180,
+    "bricks_per_day": 3.77,
+    "brick_size_mean": 7.086,
+    "brick_size_std": 0.589,
+    "spread_pct_mean": 6.01,
+    "spread_pct_median": 5.34,
+    "mean_dur_min": 446.2,
+    "median_dur_min": 133.8,
+    "trend_persistence": 3.02,
+    "ticks_per_brick": 46889.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 615,
+        "wr": 0.469919,
+        "unresolved": 564
+      },
+      "1:1.5": {
+        "n": 470,
+        "wr": 0.282979,
+        "unresolved": 709
+      },
+      "1:2.0": {
+        "n": 405,
+        "wr": 0.162963,
+        "unresolved": 774
+      }
+    },
+    "eff_rr": 0.8868,
+    "breakeven_wr": 0.53,
+    "naive_11_wr": 0.4699,
+    "margin": -0.0601,
+    "annual_signals": 236.0
+  },
+  "K=0.00354": {
+    "multiplier": 0.00354,
+    "label": "3.0x",
+    "example_bs_at_2400": 8.5,
+    "n_bricks": 805,
+    "bricks_per_day": 2.57,
+    "brick_size_mean": 8.503,
+    "brick_size_std": 0.708,
+    "spread_pct_mean": 5.06,
+    "spread_pct_median": 4.51,
+    "mean_dur_min": 652.8,
+    "median_dur_min": 204.9,
+    "trend_persistence": 3.08,
+    "ticks_per_brick": 68715.0,
+    "buffer_coverage_min": 1.0,
+    "continuation": {
+      "1:1.0": {
+        "n": 326,
+        "wr": 0.466258,
+        "unresolved": 478
+      },
+      "1:1.5": {
+        "n": 243,
+        "wr": 0.263374,
+        "unresolved": 561
+      },
+      "1:2.0": {
+        "n": 206,
+        "wr": 0.126214,
+        "unresolved": 598
+      }
+    },
+    "eff_rr": 0.9039,
+    "breakeven_wr": 0.5252,
+    "naive_11_wr": 0.4663,
+    "margin": -0.059,
+    "annual_signals": 161.0
+  }
+}

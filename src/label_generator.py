@@ -288,9 +288,12 @@ def generate_all_labels(renko_csv_path: str = None, tick_dir: str = None,
             df.at[idx, "y_mag"] = result["y_mag"]
             resolved_count += 1
 
-            # CSV outcome comparison
-            csv_outcome_win = 1 if row["outcome"] == "WIN" else 0
-            df.at[idx, "csv_outcome_match"] = float(result["y_class"] == csv_outcome_win)
+            # CSV outcome comparison (optional)
+            if "outcome" in df.columns:
+                csv_outcome_win = 1 if row["outcome"] == "WIN" else 0
+                df.at[idx, "csv_outcome_match"] = float(result["y_class"] == csv_outcome_win)
+            else:
+                df.at[idx, "csv_outcome_match"] = np.nan
 
         # Progress reporting
         if (idx + 1) % 1000 == 0 or idx == n - 1:

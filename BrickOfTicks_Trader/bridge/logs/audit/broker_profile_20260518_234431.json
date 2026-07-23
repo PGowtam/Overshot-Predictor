@@ -1,0 +1,49 @@
+{
+  "audit": {
+    "spread": {
+      "live_mean": 0.21935,
+      "live_std": 0.00532,
+      "live_median": 0.22,
+      "train_mean": 0.34232,
+      "train_std": 0.0888,
+      "train_median": 0.337,
+      "drift_pct": 35.92,
+      "PASS": false
+    },
+    "velocity": {
+      "live_median_dt_ms": 64.5,
+      "live_mean_dt_ms": 135.38,
+      "train_median_dt_ms": 20111314.5,
+      "train_mean_dt_ms": 24428584.38,
+      "drift_pct": 100.0,
+      "PASS": false
+    },
+    "volume": {
+      "live_vol_pct": 0.0,
+      "train_vol_pct": 100.0,
+      "fallback_required": true
+    },
+    "verdict": {
+      "spread_ok": false,
+      "velocity_ok": false,
+      "volume_fallback_required": true,
+      "PROCEED": false,
+      "NOTES": "Volume fallback active \u2014 expect 88.25% WR (vs 90.3%)"
+    }
+  },
+  "fallback": {
+    "skip": false,
+    "total_ticks": 2191,
+    "pos_count": 1070,
+    "neg_count": 1113,
+    "zero_count": 8,
+    "pos_ratio": 0.4884,
+    "neg_ratio": 0.508,
+    "zero_ratio": 0.0037,
+    "pos_of_nonzero": 0.4902,
+    "balanced": true,
+    "PASS": true,
+    "note": "Fallback OFI is balanced \u2014 suitable for inference"
+  },
+  "timestamp": "2026-05-18T23:44:31.530328"
+}

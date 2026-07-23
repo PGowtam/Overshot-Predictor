@@ -1,0 +1,139 @@
+{
+  "Q1": {
+    "n_samples": 1045,
+    "pred_os_mean": 1.0465,
+    "pred_os_std": 0.5082,
+    "pred_os_median": 0.9647,
+    "thresholds": {
+      "os_1.0": {
+        "n_trades": 468,
+        "win_rate": 0.8291
+      },
+      "os_1.1": {
+        "n_trades": 425,
+        "win_rate": 0.8376
+      },
+      "os_1.3": {
+        "n_trades": 291,
+        "win_rate": 0.8969
+      },
+      "os_1.6": {
+        "n_trades": 152,
+        "win_rate": 0.9342
+      },
+      "os_1.8": {
+        "n_trades": 85,
+        "win_rate": 0.9529
+      },
+      "os_2.0": {
+        "n_trades": 50,
+        "win_rate": 0.94
+      }
+    },
+    "pearson_r_wins": 0.0809
+  },
+  "Q2": {
+    "n_samples": 1969,
+    "pred_os_mean": 1.0753,
+    "pred_os_std": 0.4767,
+    "pred_os_median": 1.0158,
+    "thresholds": {
+      "os_1.0": {
+        "n_trades": 966,
+        "win_rate": 0.765
+      },
+      "os_1.1": {
+        "n_trades": 837,
+        "win_rate": 0.7981
+      },
+      "os_1.3": {
+        "n_trades": 563,
+        "win_rate": 0.865
+      },
+      "os_1.6": {
+        "n_trades": 253,
+        "win_rate": 0.9447
+      },
+      "os_1.8": {
+        "n_trades": 150,
+        "win_rate": 0.94
+      },
+      "os_2.0": {
+        "n_trades": 84,
+        "win_rate": 0.9524
+      }
+    },
+    "pearson_r_wins": 0.0862
+  },
+  "Q3": {
+    "n_samples": 1669,
+    "pred_os_mean": 1.0495,
+    "pred_os_std": 0.4426,
+    "pred_os_median": 1.0088,
+    "thresholds": {
+      "os_1.0": {
+        "n_trades": 807,
+        "win_rate": 0.7794
+      },
+      "os_1.1": {
+        "n_trades": 698,
+        "win_rate": 0.8066
+      },
+      "os_1.3": {
+        "n_trades": 439,
+        "win_rate": 0.8702
+      },
+      "os_1.6": {
+        "n_trades": 189,
+        "win_rate": 0.9048
+      },
+      "os_1.8": {
+        "n_trades": 97,
+        "win_rate": 0.9485
+      },
+      "os_2.0": {
+        "n_trades": 43,
+        "win_rate": 0.9302
+      }
+    },
+    "pearson_r_wins": 0.0767
+  },
+  "Q4": {
+    "n_samples": 1358,
+    "pred_os_mean": 1.0119,
+    "pred_os_std": 0.4256,
+    "pred_os_median": 0.9898,
+    "thresholds": {
+      "os_1.0": {
+        "n_trades": 639,
+        "win_rate": 0.7778
+      },
+      "os_1.1": {
+        "n_trades": 535,
+        "win_rate": 0.8262
+      },
+      "os_1.3": {
+        "n_trades": 315,
+        "win_rate": 0.8921
+      },
+      "os_1.6": {
+        "n_trades": 116,
+        "win_rate": 0.9655
+      },
+      "os_1.8": {
+        "n_trades": 58,
+        "win_rate": 0.9483
+      },
+      "os_2.0": {
+        "n_trades": 25,
+        "win_rate": 0.96
+      }
+    },
+    "pearson_r_wins": 0.0585
+  },
+  "ks_test_q1_q4": {
+    "statistic": 0.0709,
+    "p_value": 0.004931,
+    "significant": true
+  }
+}

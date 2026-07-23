@@ -1,0 +1,7 @@
+{
+    "T1_threshold": 0.3500000000000002,
+    "T2_threshold": 1.0,
+    "T3_threshold": 1.0,
+    "T4_threshold": 0.2,
+    "T0_veto_threshold": 0.4
+}

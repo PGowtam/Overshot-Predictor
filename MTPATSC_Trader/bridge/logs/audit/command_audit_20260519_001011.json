@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-05-19T00:09:54.588283",
+  "tick_port": 9000,
+  "cmd_port": 9001,
+  "volume": 0.01,
+  "tests": {
+    "cmd_connect": {
+      "PASS": true
+    },
+    "buy": {
+      "PASS": false,
+      "error": "TIMEOUT"
+    },
+    "sell": {
+      "PASS": false,
+      "error": "TIMEOUT"
+    }
+  },
+  "market": {
+    "bid": 4539.76,
+    "ask": 4539.98,
+    "spread": 0.22
+  },
+  "summary": {
+    "total_tests": 3,
+    "passed": 1,
+    "failed": 2,
+    "avg_latency_ms": 0,
+    "max_latency_ms": 0
+  },
+  "verdict": "FAIL"
+}

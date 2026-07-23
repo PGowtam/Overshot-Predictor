@@ -1,0 +1,119 @@
+{
+  "No filter (baseline)": {
+    "n_signals": 1608,
+    "n_resolved": 979,
+    "wins": 201,
+    "losses": 778,
+    "wr": 0.205312,
+    "expectancy": -0.384065,
+    "cum_pnl": -1070.98
+  },
+  "spread < median*1.2": {
+    "n_signals": 1434,
+    "n_resolved": 832,
+    "wins": 158,
+    "losses": 674,
+    "wr": 0.189904,
+    "expectancy": -0.430288,
+    "cum_pnl": -1020.98
+  },
+  "spread < median": {
+    "n_signals": 790,
+    "n_resolved": 465,
+    "wins": 75,
+    "losses": 390,
+    "wr": 0.16129,
+    "expectancy": -0.516129,
+    "cum_pnl": -670.37
+  },
+  "spread < P70": {
+    "n_signals": 1123,
+    "n_resolved": 637,
+    "wins": 112,
+    "losses": 525,
+    "wr": 0.175824,
+    "expectancy": -0.472527,
+    "cum_pnl": -848.19
+  },
+  "spread_pct < 15%": {
+    "n_signals": 1235,
+    "n_resolved": 694,
+    "wins": 117,
+    "losses": 577,
+    "wr": 0.168588,
+    "expectancy": -0.494236,
+    "cum_pnl": -977.89
+  },
+  "spread_pct < 12%": {
+    "n_signals": 272,
+    "n_resolved": 156,
+    "wins": 27,
+    "losses": 129,
+    "wr": 0.173077,
+    "expectancy": -0.480769,
+    "cum_pnl": -223.32
+  },
+  "spread_pct < 10%": {
+    "n_signals": 87,
+    "n_resolved": 58,
+    "wins": 9,
+    "losses": 49,
+    "wr": 0.155172,
+    "expectancy": -0.534483,
+    "cum_pnl": -91.03
+  },
+  "spread < 0.35": {
+    "n_signals": 447,
+    "n_resolved": 265,
+    "wins": 48,
+    "losses": 217,
+    "wr": 0.181132,
+    "expectancy": -0.456604,
+    "cum_pnl": -336.31
+  },
+  "spread < 0.30": {
+    "n_signals": 131,
+    "n_resolved": 90,
+    "wins": 18,
+    "losses": 72,
+    "wr": 0.2,
+    "expectancy": -0.4,
+    "cum_pnl": -104.68
+  },
+  "spread<med + OS>=1.6": {
+    "n_signals": 352,
+    "n_resolved": 219,
+    "wins": 39,
+    "losses": 180,
+    "wr": 0.178082,
+    "expectancy": -0.465753,
+    "cum_pnl": -283.83
+  },
+  "spread<med + OS>=1.8": {
+    "n_signals": 207,
+    "n_resolved": 133,
+    "wins": 20,
+    "losses": 113,
+    "wr": 0.150376,
+    "expectancy": -0.548872,
+    "cum_pnl": -200.5
+  },
+  "spread<0.35 + OS>=1.6": {
+    "n_signals": 214,
+    "n_resolved": 132,
+    "wins": 25,
+    "losses": 107,
+    "wr": 0.189394,
+    "expectancy": -0.431818,
+    "cum_pnl": -157.72
+  },
+  "spread<0.35 + OS>=1.8": {
+    "n_signals": 130,
+    "n_resolved": 84,
+    "wins": 11,
+    "losses": 73,
+    "wr": 0.130952,
+    "expectancy": -0.607143,
+    "cum_pnl": -138.37
+  }
+}

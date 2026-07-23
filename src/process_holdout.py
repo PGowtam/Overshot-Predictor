@@ -22,13 +22,13 @@ sys.path.insert(0, str(BASE_DIR / "src"))
 
 # Paths
 DATA_DIR = BASE_DIR / "Data" / "Raw"
-CSV_PATH = DATA_DIR / "renko_with_tick_outcomes_no_be_24_local.csv"
+CSV_PATH = BASE_DIR / "Data" / "Processed" / "XAUUSD_Holdout_K00295.csv"
 TICK_DIR = DATA_DIR / "Ticks"
 
-HOLDOUT_DIR = BASE_DIR / "outputs" / "holdout"
+HOLDOUT_DIR = BASE_DIR / "outputs" / "holdout_K295"
 HOLDOUT_FEATURES = HOLDOUT_DIR / "features"
 HOLDOUT_TENSORS = HOLDOUT_DIR / "tensors"
-MAIN_TENSOR_DIR = BASE_DIR / "outputs" / "tensors"
+MAIN_TENSOR_DIR = BASE_DIR / "outputs" / "tensors_holdout_K295"
 
 def step_1_labels():
     print("\n" + "="*50)

@@ -1,0 +1,16 @@
+{
+    "schema_version": 2,
+    "last_tick_msc": 0,
+    "active_ticket": 99999,
+    "active_direction": 1,
+    "active_entry": 2400.0,
+    "active_sl": 2390.0,
+    "active_tp": 2410.0,
+    "active_brick_size": 7.08,
+    "be_triggered": true,
+    "daily_pnl": 0.0,
+    "brick_count": 0,
+    "session_date": "2026-05-20",
+    "warmup_done": true,
+    "degraded_mode": true
+}

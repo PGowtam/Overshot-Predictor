@@ -1,0 +1,18 @@
+{
+    "schema_version": 3,
+    "last_tick_msc": 0,
+    "active_ticket": 0,
+    "active_direction": 0,
+    "active_entry": 0.0,
+    "active_sl": 0.0,
+    "active_tp": 0.0,
+    "active_brick_size": 0.0,
+    "active_setup_type": "",
+    "active_rr": 0.0,
+    "be_triggered": false,
+    "daily_pnl": 0.0,
+    "brick_count": 0,
+    "session_date": "",
+    "warmup_done": true,
+    "degraded_mode": true
+}

@@ -1,0 +1,21 @@
+--- Starting Synthetic Live Market Simulation ---
+
+--- Simulation Results (5000 Signals) ---
+Standard Trades (Market Orders):
+  Total: 3609
+  Wins: 2011 | Losses: 1598 | Win Rate: 55.7%
+
+Limit Order Fallback (Adverse Selection):
+  Total Attempted: 1391
+  Missed (Price ran away): 990
+  Filled & Lost (False breakout hit limit): 401
+  Filled & Won: 0 (Assumed 0 in strong momentum regimes)
+
+Baiting Strategy (Choppy Markets):
+  Total: 5000
+  Wins: 2036 | Losses: 2964 | Win Rate: 40.7%
+
+--- Feasibility Conclusions ---
+1. LIMIT ORDER ADVERSE SELECTION: The 8% slippage guard converts winning breakouts into misses, and losing false-breakouts into guaranteed losses.
+2. BAITING STRATEGY: Trading inversely during low-confidence (ranging) regimes results in a negative edge due to spread/whipsaw.
+3. SPREAD SENSITIVITY: 1:1 TP/SL ratios are easily destroyed by temporary spread widening, even if direction is correct.
